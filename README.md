@@ -2,7 +2,7 @@
 
 Sistem Smart Home berbasis IoT menggunakan MQTT protocol, Docker, Node-RED, dan Python.
 
-.
+........................................................................................
 
 ## 📋 Daftar Isi
 
