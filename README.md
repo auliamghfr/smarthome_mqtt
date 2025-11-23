@@ -140,8 +140,24 @@ docker-compose logs -f nodered
 
 Buka browser dan akses:
 ```
-http://localhost:1880
+http://localhost:1880/ui
 ```
+
+Dashboard akan menampilkan interface yang modern dan menarik dengan fitur-fitur berikut:
+
+#### ✨ Fitur Dashboard Enhanced
+- **🌡️ Temperature Monitoring**: Gauge real-time + chart trend 30 menit terakhir
+- **🚶 Motion Detection**: Status dengan animasi pulse saat terdeteksi
+- **💡 Smart Lamp Control**: Switch interaktif dengan status visual
+- **📊 System Health**: Monitor kesehatan sistem secara keseluruhan
+- **📝 Activity Log**: Log aktivitas real-time semua sensor
+- **🎨 Modern UI**: Gradient background, glass-morphism cards, responsive design
+
+#### 🎯 Cara Menggunakan Dashboard
+1. **Pantau Temperature**: Lihat gauge dan chart yang update setiap 5 detik
+2. **Test Motion Sensor**: Sensor akan mendeteksi motion dan otomatis nyalakan lampu
+3. **Kontrol Lampu**: Gunakan switch untuk on/off manual
+4. **Monitor Aktivitas**: Lihat log aktivitas di panel System Status
 
 ---
 
