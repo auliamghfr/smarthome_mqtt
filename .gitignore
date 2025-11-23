@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+
+# Docker
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node-RED data (contains sensitive info and auto-generated files)
+node-red/data/*
+!node-red/data/.gitignore
+node-red/data/flows.json
+node-red/data/flows_cred.json
+node-red/data/.config.json
+node-red/data/.config.runtime.json
+node-red/data/settings.js
+
+# Mosquitto data
+mosquitto/data/
+mosquitto/log/
+
+# Logs
+*.log

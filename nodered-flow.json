@@ -1,0 +1,366 @@
+[
+    {
+        "id": "flow_main",
+        "type": "tab",
+        "label": "Smart Home Automation",
+        "disabled": false,
+        "info": "Main automation flow for smart home system"
+    },
+    {
+        "id": "mqtt_broker_config",
+        "type": "mqtt-broker",
+        "name": "Mosquitto Broker",
+        "broker": "mosquitto",
+        "port": "1883",
+        "clientid": "nodered_client",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true
+    },
+    {
+        "id": "motion_in",
+        "type": "mqtt in",
+        "z": "flow_main",
+        "name": "Motion Sensor Input",
+        "topic": "home/sensor/motion",
+        "qos": "1",
+        "datatype": "json",
+        "broker": "mqtt_broker_config",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 140,
+        "y": 200,
+        "wires": [
+            [
+                "parse_motion_json",
+                "motion_debug"
+            ]
+        ]
+    },
+    {
+        "id": "parse_motion_json",
+        "type": "json",
+        "z": "flow_main",
+        "name": "Parse Motion JSON",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 370,
+        "y": 200,
+        "wires": [
+            [
+                "motion_switch"
+            ]
+        ]
+    },
+    {
+        "id": "motion_switch",
+        "type": "switch",
+        "z": "flow_main",
+        "name": "Motion Detected?",
+        "property": "payload.value",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 590,
+        "y": 200,
+        "wires": [
+            [
+                "set_lamp_on"
+            ],
+            [
+                "set_lamp_off"
+            ]
+        ]
+    },
+    {
+        "id": "set_lamp_on",
+        "type": "change",
+        "z": "flow_main",
+        "name": "Command: ON",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "ON",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 810,
+        "y": 180,
+        "wires": [
+            [
+                "lamp_command_out"
+            ]
+        ]
+    },
+    {
+        "id": "set_lamp_off",
+        "type": "change",
+        "z": "flow_main",
+        "name": "Command: OFF",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "OFF",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 810,
+        "y": 220,
+        "wires": [
+            [
+                "lamp_command_out"
+            ]
+        ]
+    },
+    {
+        "id": "lamp_command_out",
+        "type": "mqtt out",
+        "z": "flow_main",
+        "name": "Send Lamp Command",
+        "topic": "home/actuator/lamp/command",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "mqtt_broker_config",
+        "x": 1050,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "temp_in",
+        "type": "mqtt in",
+        "z": "flow_main",
+        "name": "Temperature Sensor",
+        "topic": "home/sensor/temperature",
+        "qos": "1",
+        "datatype": "json",
+        "broker": "mqtt_broker_config",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 140,
+        "y": 80,
+        "wires": [
+            [
+                "temp_debug"
+            ]
+        ]
+    },
+    {
+        "id": "temp_debug",
+        "type": "debug",
+        "z": "flow_main",
+        "name": "Temperature Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload.value",
+        "statusType": "auto",
+        "x": 390,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "motion_debug",
+        "type": "debug",
+        "z": "flow_main",
+        "name": "Motion Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload.status",
+        "statusType": "auto",
+        "x": 370,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "lamp_status_in",
+        "type": "mqtt in",
+        "z": "flow_main",
+        "name": "Lamp Status",
+        "topic": "home/actuator/lamp/status",
+        "qos": "1",
+        "datatype": "json",
+        "broker": "mqtt_broker_config",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 130,
+        "y": 320,
+        "wires": [
+            [
+                "lamp_status_debug"
+            ]
+        ]
+    },
+    {
+        "id": "lamp_status_debug",
+        "type": "debug",
+        "z": "flow_main",
+        "name": "Lamp Status Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload.state",
+        "statusType": "auto",
+        "x": 380,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "comment1",
+        "type": "comment",
+        "z": "flow_main",
+        "name": "Temperature Monitoring",
+        "info": "Monitors temperature sensor data",
+        "x": 150,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "comment2",
+        "type": "comment",
+        "z": "flow_main",
+        "name": "Motion-Based Lamp Automation",
+        "info": "Automatically turns lamp ON when motion detected, OFF when no motion",
+        "x": 180,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "comment3",
+        "type": "comment",
+        "z": "flow_main",
+        "name": "Lamp Status Monitoring",
+        "info": "Monitors current lamp state",
+        "x": 160,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "inject_manual_on",
+        "type": "inject",
+        "z": "flow_main",
+        "name": "Manual ON",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "ON",
+        "payloadType": "str",
+        "x": 130,
+        "y": 420,
+        "wires": [
+            [
+                "manual_lamp_command"
+            ]
+        ]
+    },
+    {
+        "id": "inject_manual_off",
+        "type": "inject",
+        "z": "flow_main",
+        "name": "Manual OFF",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "OFF",
+        "payloadType": "str",
+        "x": 130,
+        "y": 460,
+        "wires": [
+            [
+                "manual_lamp_command"
+            ]
+        ]
+    },
+    {
+        "id": "manual_lamp_command",
+        "type": "mqtt out",
+        "z": "flow_main",
+        "name": "Manual Lamp Control",
+        "topic": "home/actuator/lamp/command",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "mqtt_broker_config",
+        "x": 390,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "comment4",
+        "type": "comment",
+        "z": "flow_main",
+        "name": "Manual Lamp Control",
+        "info": "Click inject buttons to manually control lamp",
+        "x": 150,
+        "y": 380,
+        "wires": []
+    }
+]

@@ -1,0 +1,7 @@
+# Node-RED data directory
+# This folder will contain Node-RED flows and settings
+# Automatically created by Docker
+
+# Keep this directory but ignore its contents in git
+*
+!.gitignore

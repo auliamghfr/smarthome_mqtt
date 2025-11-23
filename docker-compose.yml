@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # MQTT Broker - Eclipse Mosquitto
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: mqtt_broker
+    ports:
+      - "1883:1883"  # MQTT port
+      - "9001:9001"  # WebSocket port (optional)
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    networks:
+      - smarthome_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-i", "healthcheck", "-W", "3"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Node-RED - Logic Controller & Dashboard
+  nodered:
+    image: nodered/node-red:latest
+    container_name: node_red
+    ports:
+      - "1880:1880"  # Node-RED UI
+    volumes:
+      - ./node-red/data:/data
+    networks:
+      - smarthome_network
+    environment:
+      - TZ=Asia/Jakarta
+    depends_on:
+      - mosquitto
+    restart: unless-stopped
+
+  # Temperature Sensor Device
+  temp_sensor:
+    build:
+      context: ./devices
+      dockerfile: Dockerfile
+    container_name: temp_sensor
+    environment:
+      - DEVICE_TYPE=temp_sensor
+      - BROKER=mosquitto
+      - PORT=1883
+      - CLIENT_ID=temp_sensor
+      - TOPIC=home/sensor/temperature
+      - INTERVAL=5
+    networks:
+      - smarthome_network
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Motion Sensor Device
+  motion_sensor:
+    build:
+      context: ./devices
+      dockerfile: Dockerfile
+    container_name: motion_sensor
+    environment:
+      - DEVICE_TYPE=motion_sensor
+      - BROKER=mosquitto
+      - PORT=1883
+      - CLIENT_ID=motion_sensor
+      - TOPIC=home/sensor/motion
+      - INTERVAL=3
+    networks:
+      - smarthome_network
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Smart Lamp Actuator
+  lamp:
+    build:
+      context: ./devices
+      dockerfile: Dockerfile
+    container_name: smart_lamp
+    environment:
+      - DEVICE_TYPE=smart_lamp
+      - BROKER=mosquitto
+      - PORT=1883
+      - CLIENT_ID=smart_lamp
+      - COMMAND_TOPIC=home/actuator/lamp/command
+      - STATUS_TOPIC=home/actuator/lamp/status
+    networks:
+      - smarthome_network
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    restart: unless-stopped
+
+# Docker Network
+networks:
+  smarthome_network:
+    driver: bridge
+
+# Volumes for persistent data
+volumes:
+  mosquitto_data:
+  mosquitto_log:

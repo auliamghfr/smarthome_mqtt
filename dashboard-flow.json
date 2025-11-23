@@ -1,0 +1,373 @@
+[
+    {
+        "id": "dashboard_tab",
+        "type": "tab",
+        "label": "Smart Home Dashboard",
+        "disabled": false,
+        "info": "Dashboard UI for Smart Home monitoring and control"
+    },
+    {
+        "id": "mqtt_broker_config",
+        "type": "mqtt-broker",
+        "name": "Mosquitto Broker",
+        "broker": "mosquitto",
+        "port": "1883",
+        "clientid": "dashboard_client",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true
+    },
+    {
+        "id": "temp_in_dashboard",
+        "type": "mqtt in",
+        "z": "dashboard_tab",
+        "name": "Temperature Input",
+        "topic": "home/sensor/temperature",
+        "qos": "1",
+        "datatype": "json",
+        "broker": "mqtt_broker_config",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 140,
+        "y": 80,
+        "wires": [
+            [
+                "temp_json_parse",
+                "temp_debug"
+            ]
+        ]
+    },
+    {
+        "id": "temp_json_parse",
+        "type": "json",
+        "z": "dashboard_tab",
+        "name": "Parse Temperature JSON",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 380,
+        "y": 80,
+        "wires": [
+            [
+                "temp_gauge"
+            ]
+        ]
+    },
+    {
+        "id": "temp_gauge",
+        "type": "ui_gauge",
+        "z": "dashboard_tab",
+        "name": "Temperature Gauge",
+        "group": "temp_group",
+        "order": 1,
+        "width": 6,
+        "height": 4,
+        "gtype": "gage",
+        "title": "Room Temperature",
+        "label": "°C",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "40",
+        "colors": [
+            "#00ff00",
+            "#ffff00",
+            "#ff0000"
+        ],
+        "seg1": "20",
+        "seg2": "30",
+        "x": 600,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "motion_in_dashboard",
+        "type": "mqtt in",
+        "z": "dashboard_tab",
+        "name": "Motion Input",
+        "topic": "home/sensor/motion",
+        "qos": "1",
+        "datatype": "json",
+        "broker": "mqtt_broker_config",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 140,
+        "y": 200,
+        "wires": [
+            [
+                "motion_json_parse",
+                "motion_debug"
+            ]
+        ]
+    },
+    {
+        "id": "motion_json_parse",
+        "type": "json",
+        "z": "dashboard_tab",
+        "name": "Parse Motion JSON",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 380,
+        "y": 200,
+        "wires": [
+            [
+                "motion_indicator"
+            ]
+        ]
+    },
+    {
+        "id": "motion_indicator",
+        "type": "ui_text",
+        "z": "dashboard_tab",
+        "group": "motion_group",
+        "order": 1,
+        "width": 6,
+        "height": 1,
+        "name": "Motion Status",
+        "label": "Motion Detection",
+        "format": "{{msg.payload.status}}",
+        "layout": "row-spread",
+        "x": 600,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "lamp_status_in_dashboard",
+        "type": "mqtt in",
+        "z": "dashboard_tab",
+        "name": "Lamp Status Input",
+        "topic": "home/actuator/lamp/status",
+        "qos": "1",
+        "datatype": "json",
+        "broker": "mqtt_broker_config",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 140,
+        "y": 320,
+        "wires": [
+            [
+                "lamp_status_json_parse",
+                "lamp_status_debug"
+            ]
+        ]
+    },
+    {
+        "id": "lamp_status_json_parse",
+        "type": "json",
+        "z": "dashboard_tab",
+        "name": "Parse Lamp Status JSON",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 400,
+        "y": 320,
+        "wires": [
+            [
+                "lamp_status_indicator",
+                "lamp_switch_update"
+            ]
+        ]
+    },
+    {
+        "id": "lamp_status_indicator",
+        "type": "ui_text",
+        "z": "dashboard_tab",
+        "group": "lamp_group",
+        "order": 2,
+        "width": 6,
+        "height": 1,
+        "name": "Lamp Status Display",
+        "label": "Lamp Status",
+        "format": "{{msg.payload.state}}",
+        "layout": "row-spread",
+        "x": 650,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "lamp_switch",
+        "type": "ui_switch",
+        "z": "dashboard_tab",
+        "name": "Lamp Control Switch",
+        "label": "Smart Lamp Control",
+        "tooltip": "",
+        "group": "lamp_group",
+        "order": 1,
+        "width": 6,
+        "height": 1,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "ON",
+        "onvalueType": "str",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "OFF",
+        "offvalueType": "str",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "x": 400,
+        "y": 400,
+        "wires": [
+            [
+                "lamp_command_out"
+            ]
+        ]
+    },
+    {
+        "id": "lamp_switch_update",
+        "type": "change",
+        "z": "dashboard_tab",
+        "name": "Update Switch State",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload.state",
+                "pt": "msg",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 650,
+        "y": 360,
+        "wires": [
+            [
+                "lamp_switch"
+            ]
+        ]
+    },
+    {
+        "id": "lamp_command_out",
+        "type": "mqtt out",
+        "z": "dashboard_tab",
+        "name": "Send Lamp Command",
+        "topic": "home/actuator/lamp/command",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "mqtt_broker_config",
+        "x": 650,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "temp_debug",
+        "type": "debug",
+        "z": "dashboard_tab",
+        "name": "Temperature Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 380,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "motion_debug",
+        "type": "debug",
+        "z": "dashboard_tab",
+        "name": "Motion Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 380,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "lamp_status_debug",
+        "type": "debug",
+        "z": "dashboard_tab",
+        "name": "Lamp Status Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 400,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "temp_group",
+        "type": "ui_group",
+        "name": "Temperature Monitoring",
+        "tab": "dashboard_ui_tab",
+        "order": 1,
+        "disp": true,
+        "width": 6,
+        "collapse": false
+    },
+    {
+        "id": "motion_group",
+        "type": "ui_group",
+        "name": "Motion Detection",
+        "tab": "dashboard_ui_tab",
+        "order": 2,
+        "disp": true,
+        "width": 6,
+        "collapse": false
+    },
+    {
+        "id": "lamp_group",
+        "type": "ui_group",
+        "name": "Smart Lamp Control",
+        "tab": "dashboard_ui_tab",
+        "order": 3,
+        "disp": true,
+        "width": 6,
+        "collapse": false
+    },
+    {
+        "id": "dashboard_ui_tab",
+        "type": "ui_tab",
+        "name": "Smart Home Dashboard",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "comment1",
+        "type": "comment",
+        "z": "dashboard_tab",
+        "name": "Dashboard Flow",
+        "info": "Flow untuk dashboard UI - menampilkan temperature gauge, motion status, dan lamp control",
+        "x": 150,
+        "y": 40,
+        "wires": []
+    }
+]
