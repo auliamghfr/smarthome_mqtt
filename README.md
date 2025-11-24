@@ -8,6 +8,7 @@ Sistem Smart Home berbasis IoT menggunakan MQTT protocol, Docker, Node-RED, dan 
 - [Komponen Sistem](#komponen-sistem)
 - [Struktur Project](#struktur-project)
 - [Cara Menjalankan](#cara-menjalankan)
+- [Web Dashboard UI](#web-dashboard-ui)
 - [Testing & Monitoring](#testing--monitoring)
 - [Konfigurasi Node-RED](#konfigurasi-node-red)
 - [Troubleshooting](#troubleshooting)
@@ -44,9 +45,10 @@ Sistem Smart Home berbasis IoT menggunakan MQTT protocol, Docker, Node-RED, dan 
 
 ### 1. **MQTT Broker (Mosquitto)**
 - Image: `eclipse-mosquitto:2.0`
-- Port: `1883` (MQTT)
+- Port: `1883` (MQTT), `9001` (WebSocket)
 - Fungsi: Pusat komunikasi pub/sub untuk semua IoT devices
 - Konfigurasi: `allow_anonymous true` untuk development
+- WebSocket: Enabled untuk web dashboard connectivity
 
 ### 2. **Node-RED**
 - Image: `nodered/node-red:latest`
@@ -136,28 +138,87 @@ docker-compose logs -f mosquitto
 docker-compose logs -f nodered
 ```
 
-### Langkah 4: Akses Node-RED Dashboard
+### Langkah 4: Akses Dashboard
 
-Buka browser dan akses:
+Ada 2 pilihan dashboard untuk monitoring dan kontrol:
+
+#### **Option A: Web Dashboard (Recommended)** 🌐
+
+Modern web-based dashboard dengan real-time chart dan kontrol interaktif.
+
+```bash
+# Start HTTP server untuk web dashboard
+cd web_ui
+python3 -m http.server 8000
+
+# Buka browser:
+http://localhost:8000
+```
+
+**Fitur Web Dashboard:**
+- 📊 **Real-time Chart**: Temperature & motion trend visualization
+- 🎮 **Interactive Controls**: Lamp ON/OFF buttons + brightness slider
+- 📝 **Event Log**: Complete activity history table
+- 🎨 **Modern Dark Theme**: Professional UI dengan smooth animations
+- 📱 **Responsive Design**: Works on desktop & mobile
+
+**Detail lengkap:** Lihat [web_ui/README.md](web_ui/README.md)
+
+#### **Option B: Node-RED Dashboard** 🔧
+
+Built-in Node-RED dashboard untuk monitoring dan automation logic.
+
 ```
 http://localhost:1880/ui
 ```
 
-Dashboard akan menampilkan interface yang modern dan menarik dengan fitur-fitur berikut:
+**Fitur Node-RED Dashboard:**
+- 🌡️ Temperature Monitoring: Gauge real-time + chart trend
+- 🚶 Motion Detection: Status dengan animasi pulse
+- 💡 Smart Lamp Control: Switch interaktif dengan status visual
+- 📊 System Health: Monitor kesehatan sistem
+- 📝 Activity Log: Log aktivitas real-time semua sensor
 
-#### ✨ Fitur Dashboard Enhanced
-- **🌡️ Temperature Monitoring**: Gauge real-time + chart trend 30 menit terakhir
-- **🚶 Motion Detection**: Status dengan animasi pulse saat terdeteksi
-- **💡 Smart Lamp Control**: Switch interaktif dengan status visual
-- **📊 System Health**: Monitor kesehatan sistem secara keseluruhan
-- **📝 Activity Log**: Log aktivitas real-time semua sensor
-- **🎨 Modern UI**: Gradient background, glass-morphism cards, responsive design
+---
 
-#### 🎯 Cara Menggunakan Dashboard
-1. **Pantau Temperature**: Lihat gauge dan chart yang update setiap 5 detik
-2. **Test Motion Sensor**: Sensor akan mendeteksi motion dan otomatis nyalakan lampu
-3. **Kontrol Lampu**: Gunakan switch untuk on/off manual
-4. **Monitor Aktivitas**: Lihat log aktivitas di panel System Status
+## 🌐 Web Dashboard UI
+
+### Screenshot Preview
+Web dashboard menyediakan interface modern untuk monitoring dan kontrol Smart Home system.
+
+### Quick Start
+```bash
+# 1. Pastikan semua containers running
+docker-compose up -d
+
+# 2. Start web server
+cd web_ui
+python3 -m http.server 8000
+
+# 3. Buka browser
+# http://localhost:8000
+```
+
+### Features
+- **Overview Cards**: Temperature, Motion, Lamp status dengan icon dan visual indicators
+- **Real-time Chart**: Multi-series line chart (temperature vs motion)
+- **Lamp Control Panel**: ON/OFF buttons + brightness slider (0-100%)
+- **Event Log**: Scrollable table dengan auto-update (max 100 entries)
+- **Connection Status**: Real-time MQTT WebSocket connection indicator
+
+### Technical Stack
+- **Frontend**: Pure HTML5 + CSS3 + Vanilla JavaScript
+- **Charts**: Chart.js for data visualization
+- **MQTT**: MQTT.js over WebSocket (ws://localhost:9001)
+- **Styling**: Custom dark theme dengan CSS variables
+- **Responsive**: Mobile-first design
+
+### Dokumentasi Lengkap
+Lihat [web_ui/README.md](web_ui/README.md) untuk:
+- Setup instructions
+- Troubleshooting guide
+- Customization options
+- MQTT topic reference
 
 ---
 
