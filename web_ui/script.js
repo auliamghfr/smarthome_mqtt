@@ -1,6 +1,22 @@
 // MQTT Configuration
-// Use window.location.hostname to auto-detect server IP (works for both localhost and remote access)
-const MQTT_BROKER = `ws://${window.location.hostname}:9001`;
+// Connect directly to Mosquitto WebSocket
+// For localhost access: ws://localhost:9001
+// For remote WSL access: mosquitto is inside Docker network
+// Solution: Use the same host IP where web UI server is running
+let MQTT_BROKER;
+const host = window.location.hostname;
+const port = 9001;
+
+// If accessing from localhost or 127.0.0.1
+if (host === 'localhost' || host === '127.0.0.1' || host === 'localhost:8000') {
+    MQTT_BROKER = `ws://localhost:${port}`;
+} else {
+    // For remote IP (WSL case) - use same host
+    MQTT_BROKER = `ws://${host}:${port}`;
+}
+
+console.log('📡 MQTT Broker URL:', MQTT_BROKER);
+console.log('🌐 Connecting from:', host);
 const TOPICS = {
     TEMPERATURE: 'home/sensor/temperature',
     MOTION: 'home/sensor/motion',
