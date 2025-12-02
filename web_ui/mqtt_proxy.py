@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Simple HTTP-to-MQTT Proxy untuk Web Dashboard
-Menerima HTTP requests dan translate ke MQTT messages
+Smart Home MQTT Proxy Server
+HTTP-to-MQTT bridge for web dashboard
+Connects to MQTT broker and exposes REST API
 """
 
 from flask import Flask, jsonify, request
@@ -17,7 +18,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # MQTT Configuration
-MQTT_BROKER = "localhost"  # Changed from "mosquitto" for host access
+MQTT_BROKER = "localhost"  # Use "mosquitto" if running in Docker
 MQTT_PORT = 1883
 MQTT_CLIENT_ID = "web_dashboard_proxy"
 
@@ -25,7 +26,9 @@ MQTT_CLIENT_ID = "web_dashboard_proxy"
 sensor_data = {
     "temperature": None,
     "motion": None,
-    "lamp_status": None,
+    "light_status": None,
+    "thermostat_status": None,
+    "camera_status": None,
     "timestamp": None
 }
 
@@ -37,9 +40,16 @@ mqtt_client = None
 
 def on_connect(client, userdata, flags, rc):
     print(f"✅ Connected to MQTT broker with result code {rc}")
-    # Subscribe to all topics
-    client.subscribe("home/sensor/#")
-    client.subscribe("home/actuator/#")
+    # Subscribe to all smart home topics
+    client.subscribe("home/sensor/temperature")
+    client.subscribe("home/sensor/motion")
+    client.subscribe("home/security/motion")
+    client.subscribe("home/security/camera/status")
+    client.subscribe("home/light/status")
+    client.subscribe("home/actuator/lamp/status")
+    client.subscribe("home/thermostat/status")
+    client.subscribe("home/hvac/command")
+    print("✅ Subscribed to all topics")
 
 def on_message(client, userdata, msg):
     topic = msg.topic
@@ -51,37 +61,128 @@ def on_message(client, userdata, msg):
     except:
         data = {"raw": payload}
     
+    timestamp = datetime.now().isoformat()
+    
     # Store data based on topic
-    if "temperature" in topic:
-        sensor_data["temperature"] = data
-        event_log.append({
-            "type": "temperature",
+    if topic == "home/sensor/temperature":
+        sensor_data["temperature"] = {
             "value": data.get("value"),
             "unit": data.get("unit", "°C"),
-            "timestamp": datetime.now().isoformat()
-        })
-        print(f"🌡️ Temperature: {data.get('value')}°C")
-    
-    elif "motion" in topic:
-        sensor_data["motion"] = data
+            "timestamp": timestamp
+        }
         event_log.append({
-            "type": "motion",
-            "status": data.get("status"),
-            "value": data.get("value"),
-            "timestamp": datetime.now().isoformat()
+            "time": datetime.now().strftime("%H:%M:%S"),
+            "source": "Temperature Sensor",
+            "role": "Publisher",
+            "type": "Reading",
+            "value": f"{data.get('value', 0):.1f}°C"
         })
-        print(f"🚶 Motion: {data.get('status')}")
+        print(f"🌡️  Temperature: {data.get('value')}°C")
     
-    elif "lamp/status" in topic:
-        sensor_data["lamp_status"] = data
+    elif topic == "home/sensor/motion":
+        # Motion sensor from devices/motion_sensor.py
+        motion_value = data.get("value", 0)
+        motion_status = data.get("status", "unknown")
+        
+        sensor_data["motion"] = {
+            "detected": motion_value == 1,
+            "camera_id": "motion_sensor",
+            "timestamp": timestamp
+        }
+        
+        if motion_value == 1:
+            event_log.append({
+                "time": datetime.now().strftime("%H:%M:%S"),
+                "source": "Motion Sensor",
+                "role": "Publisher",
+                "type": "Motion Detected",
+                "value": "🚨 Motion Alert"
+            })
+            print(f"🚨 Motion detected")
+        else:
+            event_log.append({
+                "time": datetime.now().strftime("%H:%M:%S"),
+                "source": "Motion Sensor",
+                "role": "Publisher",
+                "type": "No Motion",
+                "value": "✓ Clear"
+            })
+    
+    elif topic == "home/security/motion":
+        # Security camera motion
+        sensor_data["motion"] = {
+            "detected": True,
+            "camera_id": data.get("camera_id"),
+            "timestamp": timestamp
+        }
         event_log.append({
-            "type": "lamp",
-            "state": data.get("state"),
-            "timestamp": datetime.now().isoformat()
+            "time": datetime.now().strftime("%H:%M:%S"),
+            "source": f"Camera {data.get('camera_id', 'Unknown')}",
+            "role": "Publisher",
+            "type": "Motion Detected",
+            "value": "⚠️ Motion Alert"
         })
-        print(f"💡 Lamp: {data.get('state')}")
+        print(f"🚨 Motion detected from {data.get('camera_id')}")
     
-    sensor_data["timestamp"] = datetime.now().isoformat()
+    elif topic == "home/security/camera/status":
+        sensor_data["camera_status"] = {
+            "active": data.get("active"),
+            "recording": data.get("recording"),
+            "camera_id": data.get("camera_id"),
+            "timestamp": timestamp
+        }
+        
+        status_text = "Active" if data.get("active") else "Inactive"
+        recording_text = " | Recording" if data.get("recording") else ""
+        
+        event_log.append({
+            "time": datetime.now().strftime("%H:%M:%S"),
+            "source": f"Camera {data.get('camera_id', 'Unknown')}",
+            "role": "Publisher",
+            "type": "Status Change",
+            "value": f"{status_text}{recording_text}"
+        })
+        print(f"📷 Camera status: {data.get('active')}")
+    
+    elif topic == "home/light/status" or topic == "home/actuator/lamp/status":
+        state = data.get("state", "UNKNOWN")
+        brightness = data.get("brightness", 0)
+        
+        sensor_data["light_status"] = {
+            "state": state,
+            "brightness": brightness,
+            "light_id": data.get("light_id", "smart_lamp"),
+            "timestamp": timestamp
+        }
+        
+        # Add to event log
+        event_log.append({
+            "time": datetime.now().strftime("%H:%M:%S"),
+            "source": "Smart Lamp",
+            "role": "Subscriber",
+            "type": "Status Change",
+            "value": f"💡 {state} ({brightness}%)"
+        })
+        print(f"💡 Light: {state} - {brightness}%")
+    
+    elif topic == "home/thermostat/status":
+        sensor_data["thermostat_status"] = {
+            "current_temp": data.get("current_temp"),
+            "target_temp": data.get("target_temp"),
+            "mode": data.get("mode"),
+            "hvac_state": data.get("hvac_state"),
+            "timestamp": timestamp
+        }
+        event_log.append({
+            "time": datetime.now().strftime("%H:%M:%S"),
+            "source": "Thermostat",
+            "role": "Subscriber",
+            "type": "Status Update",
+            "value": f"Mode: {data.get('mode')} | HVAC: {data.get('hvac_state')}"
+        })
+        print(f"🌡️  Thermostat: {data.get('mode')} - {data.get('hvac_state')}")
+    
+    sensor_data["timestamp"] = timestamp
 
 def on_disconnect(client, userdata, rc):
     if rc != 0:
@@ -110,7 +211,9 @@ def get_data():
     return jsonify({
         "temperature": sensor_data.get("temperature"),
         "motion": sensor_data.get("motion"),
-        "lamp_status": sensor_data.get("lamp_status"),
+        "light_status": sensor_data.get("light_status"),
+        "thermostat_status": sensor_data.get("thermostat_status"),
+        "camera_status": sensor_data.get("camera_status"),
         "timestamp": sensor_data.get("timestamp")
     })
 
@@ -124,23 +227,63 @@ def get_motion():
     """Get current motion status"""
     return jsonify(sensor_data.get("motion") or {})
 
-@app.route('/api/lamp', methods=['GET'])
-def get_lamp_status():
-    """Get lamp status"""
-    return jsonify(sensor_data.get("lamp_status") or {})
+@app.route('/api/light', methods=['GET'])
+def get_light_status():
+    """Get light status"""
+    return jsonify(sensor_data.get("light_status") or {})
 
-@app.route('/api/lamp/control', methods=['POST'])
-def control_lamp():
-    """Control lamp - POST {'command': 'ON'|'OFF'}"""
+@app.route('/api/light/control', methods=['POST'])
+def control_light():
+    """Control light - POST {'command': 'ON'|'OFF'} or {'command': 'BRIGHTNESS', 'level': 0-100}"""
     try:
         data = request.get_json()
         command = data.get("command", "").upper()
         
         if command in ["ON", "OFF"]:
-            mqtt_client.publish("home/actuator/lamp/command", command, qos=1)
+            payload = json.dumps({"command": command})
+            mqtt_client.publish("home/actuator/lamp/command", payload, qos=1)
             return jsonify({"status": "success", "command": command}), 200
+        elif command == "BRIGHTNESS":
+            level = data.get("level", 100)
+            payload = json.dumps({"command": "BRIGHTNESS", "level": level})
+            mqtt_client.publish("home/actuator/lamp/command", payload, qos=1)
+            return jsonify({"status": "success", "command": command, "level": level}), 200
         else:
             return jsonify({"status": "error", "message": "Invalid command"}), 400
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/thermostat', methods=['GET'])
+def get_thermostat():
+    """Get thermostat status"""
+    return jsonify(sensor_data.get("thermostat_status") or {})
+
+@app.route('/api/thermostat/control', methods=['POST'])
+def control_thermostat():
+    """Control thermostat - POST {'command': 'SET_TARGET', 'target': 24} or {'command': 'SET_MODE', 'mode': 'AUTO'}"""
+    try:
+        data = request.get_json()
+        command = data.get("command", "").upper()
+        
+        payload = json.dumps(data)
+        mqtt_client.publish("home/thermostat/command", payload, qos=1)
+        return jsonify({"status": "success", "command": command}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/camera', methods=['GET'])
+def get_camera():
+    """Get camera status"""
+    return jsonify(sensor_data.get("camera_status") or {})
+
+@app.route('/api/camera/control', methods=['POST'])
+def control_camera():
+    """Control camera - POST {'command': 'ACTIVATE'|'DEACTIVATE'}"""
+    try:
+        data = request.get_json()
+        payload = json.dumps(data)
+        mqtt_client.publish("home/security/camera/command", payload, qos=1)
+        return jsonify({"status": "success"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
