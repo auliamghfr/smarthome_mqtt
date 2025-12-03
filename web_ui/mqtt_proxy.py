@@ -84,6 +84,7 @@ def on_message(client, userdata, msg):
         motion_value = data.get("value", 0)
         motion_status = data.get("status", "unknown")
         
+        # Always update motion status (detected or not detected)
         sensor_data["motion"] = {
             "detected": motion_value == 1,
             "camera_id": "motion_sensor",
@@ -98,7 +99,7 @@ def on_message(client, userdata, msg):
                 "type": "Motion Detected",
                 "value": "🚨 Motion Alert"
             })
-            print(f"🚨 Motion detected")
+            print(f"🚨 Motion detected (value=1)")
         else:
             event_log.append({
                 "time": datetime.now().strftime("%H:%M:%S"),
@@ -107,6 +108,7 @@ def on_message(client, userdata, msg):
                 "type": "No Motion",
                 "value": "✓ Clear"
             })
+            print(f"✓ No motion detected (value=0)")
     
     elif topic == "home/security/motion":
         # Security camera motion

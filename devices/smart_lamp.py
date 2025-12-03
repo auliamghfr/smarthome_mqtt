@@ -39,32 +39,7 @@ class SmartLamp:
         try:
             payload = msg.payload.decode('utf-8')
             
-            # Handle motion sensor messages
-            if msg.topic == self.motion_topic:
-                try:
-                    data = json.loads(payload)
-                    motion_value = data.get("value", 0)
-                    
-                    if motion_value == 1:
-                        # Motion detected - turn on lamp
-                        logger.info("🚨 Motion detected! Turning lamp ON")
-                        self.lamp_state = "ON"
-                        self.last_motion_time = time.time()
-                        self.publish_status()
-                    else:
-                        # No motion - check if we should turn off
-                        current_time = time.time()
-                        time_since_motion = current_time - self.last_motion_time
-                        
-                        if self.lamp_state == "ON" and time_since_motion > self.auto_off_delay:
-                            logger.info("⏰ No motion for 30s, turning lamp OFF")
-                            self.lamp_state = "OFF"
-                            self.publish_status()
-                except json.JSONDecodeError:
-                    logger.warning(f"Invalid JSON from motion sensor: {payload}")
-                return
-            
-            # Handle lamp command messages
+            # Only handle lamp command messages (automation handled by Node-RED)
             logger.info(f"📥 Received command: {payload} on {msg.topic}")
             
             # Try to parse as JSON first
@@ -135,10 +110,6 @@ class SmartLamp:
         # Subscribe to command topic
         self.client.subscribe(self.command_topic, qos=1)
         logger.info(f"✓ Subscribed to {self.command_topic}")
-        
-        # Subscribe to motion sensor topic for automation
-        self.client.subscribe(self.motion_topic, qos=1)
-        logger.info(f"✓ Subscribed to {self.motion_topic} for automation")
         
         # Publish initial status
         self.publish_status()

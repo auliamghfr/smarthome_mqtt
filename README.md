@@ -66,15 +66,29 @@ Sistem Smart Home berbasis IoT menggunakan MQTT protocol, Docker, Node-RED, dan 
 
 ### 4. **Motion Sensor**
 - Bahasa: Python 3.11
-- Publish ke: `home/sensor/motion`
+- Publish ke: `home/security/motion`
 - Interval: 3 detik
-- Data: Status gerakan (0/1)
+- Data: Status gerakan (0/1) dalam format JSON
 
-### 5. **Smart Lamp**
+### 5. **Smart Lamp (Light)**
 - Bahasa: Python 3.11
-- Subscribe: `home/actuator/lamp/command`
-- Publish: `home/actuator/lamp/status`
-- Command: ON/OFF
+- Subscribe: `home/light/command`
+- Publish: `home/light/status`
+- Command: ON/OFF dengan brightness support
+- Status: JSON dengan state, brightness, timestamp
+
+### 6. **Thermostat**
+- Bahasa: Python 3.11
+- Subscribe: `home/thermostat/command`
+- Publish: `home/thermostat/status`
+- Mode: AUTO, HEAT, COOL, OFF
+- HVAC State: HEATING, COOLING, IDLE
+
+### 7. **Enhanced Web Dashboard**
+- Stack: Flask + paho-mqtt + HTML/CSS/JS
+- MQTT Proxy: HTTP-to-MQTT bridge (port 5000)
+- Web UI: Modern dashboard (port 8000)
+- Features: Real-time monitoring, device control, charts, event logs
 
 ---
 
@@ -84,17 +98,27 @@ Sistem Smart Home berbasis IoT menggunakan MQTT protocol, Docker, Node-RED, dan 
 mqtt_smarthome/
 ├── docker-compose.yml          # Orchestration semua services
 ├── README.md                   # Dokumentasi ini
+├── DASHBOARD_UPDATE.md         # Enhanced dashboard guide
+├── start-dashboard.sh          # Quick start script untuk dashboard
 ├── mosquitto/
 │   └── mosquitto.conf          # Konfigurasi MQTT broker
 ├── node-red/
-│   └── data/                   # Node-RED persistent data
-└── devices/
-    ├── Dockerfile              # Container image untuk devices
-    ├── run_device.py           # Device launcher
-    ├── utils.py                # MQTT helper functions
-    ├── temp_sensor.py          # Temperature sensor script
-    ├── motion_sensor.py        # Motion sensor script
-    └── smart_lamp.py           # Smart lamp actuator script
+│   └── data/
+│       ├── flows.json          # Node-RED automation flows
+│       └── settings.js         # Node-RED settings
+├── devices/
+│   ├── Dockerfile              # Container image untuk devices
+│   ├── run_device.py           # Device launcher
+│   ├── utils.py                # MQTT helper functions
+│   ├── temp_sensor.py          # Temperature sensor script
+│   ├── motion_sensor.py        # Motion sensor script
+│   └── smart_lamp.py           # Smart lamp actuator script
+└── web_ui/                     # Enhanced Web Dashboard
+    ├── index.html              # Dashboard UI
+    ├── script.js               # Frontend logic
+    ├── style.css               # Modern dark theme
+    ├── mqtt_proxy.py           # MQTT-to-HTTP proxy server
+    └── README.md               # Dashboard documentation
 ```
 
 ---
@@ -142,83 +166,274 @@ docker-compose logs -f nodered
 
 Ada 2 pilihan dashboard untuk monitoring dan kontrol:
 
-#### **Option A: Web Dashboard (Recommended)** 🌐
+#### **Option A: Enhanced Web Dashboard (Recommended)** 🌐
 
-Modern web-based dashboard dengan real-time chart dan kontrol interaktif.
+Modern web-based dashboard dengan MQTT proxy API dan real-time visualization.
 
+**Quick Start dengan Script:**
 ```bash
-# Start HTTP server untuk web dashboard
+# Gunakan script otomatis
+bash start-dashboard.sh
+
+# Script akan:
+# 1. Start MQTT Proxy (port 5000)
+# 2. Start Web Server (port 8000)
+# 3. Verify semua services
+```
+
+**Manual Start (Alternative):**
+```bash
+# 1. Start MQTT Proxy Server
+cd web_ui
+python3 mqtt_proxy.py &
+
+# 2. Start Web Server (terminal baru)
 cd web_ui
 python3 -m http.server 8000
 
-# Buka browser:
+# 3. Buka browser:
 http://localhost:8000
 ```
 
-**Fitur Web Dashboard:**
-- 📊 **Real-time Chart**: Temperature & motion trend visualization
-- 🎮 **Interactive Controls**: Lamp ON/OFF buttons + brightness slider
-- 📝 **Event Log**: Complete activity history table
+**Fitur Enhanced Dashboard:**
+- 🛰️ **MQTT Proxy API**: HTTP bridge untuk MQTT data (port 5000)
+- 📊 **Real-time Chart**: Temperature & motion trend dengan Chart.js
+- 🎮 **Device Controls**: Light ON/OFF, brightness slider (0-100%)
+- 🌡️ **Thermostat Card**: Mode, HVAC state, target temperature display
+- 📹 **Camera Status**: Motion detection & recording indicator
+- 📝 **Event Log**: Time-stamped activity table dengan auto-scroll
 - 🎨 **Modern Dark Theme**: Professional UI dengan smooth animations
 - 📱 **Responsive Design**: Works on desktop & mobile
+- ✅ **Connection Status**: Real-time indicator dengan health check
 
-**Detail lengkap:** Lihat [web_ui/README.md](web_ui/README.md)
+**Architecture:**
+```
+Browser (port 8000) ──HTTP polling──> MQTT Proxy (port 5000) ──MQTT──> Mosquitto (port 1883)
+```
+
+**Detail lengkap:** Lihat [DASHBOARD_UPDATE.md](DASHBOARD_UPDATE.md)
 
 #### **Option B: Node-RED Dashboard** 🔧
 
-Built-in Node-RED dashboard untuk monitoring dan automation logic.
+Built-in Node-RED dashboard untuk automation logic dan monitoring.
 
 ```
 http://localhost:1880/ui
 ```
 
 **Fitur Node-RED Dashboard:**
-- 🌡️ Temperature Monitoring: Gauge real-time + chart trend
-- 🚶 Motion Detection: Status dengan animasi pulse
-- 💡 Smart Lamp Control: Switch interaktif dengan status visual
-- 📊 System Health: Monitor kesehatan sistem
-- 📝 Activity Log: Log aktivitas real-time semua sensor
+- 🌡️ Temperature Monitoring: Gauge real-time
+- 🚶 Motion Detection: Status dengan visual indicator
+- 💡 Smart Lamp Control: Switch interaktif
+- 🔧 Flow Editor: Visual programming untuk automation
+- 📝 Debug Console: Live MQTT message monitoring
 
 ---
 
-## 🌐 Web Dashboard UI
+## 🌐 Enhanced Web Dashboard
 
-### Screenshot Preview
-Web dashboard menyediakan interface modern untuk monitoring dan kontrol Smart Home system.
+### Architecture Overview
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Enhanced Dashboard System                    │
+│                                                                   │
+│  Browser (localhost:8000)                                        │
+│       │                                                           │
+│       │ HTTP Polling (1s interval)                               │
+│       ▼                                                           │
+│  MQTT Proxy Server (localhost:5000)                             │
+│       │                                                           │
+│       │ REST API Endpoints:                                      │
+│       │  • GET /api/data        (all sensor data)               │
+│       │  • GET /api/events      (event log)                     │
+│       │  • GET /api/status      (connection status)             │
+│       │  • POST /api/light/control (lamp commands)              │
+│       │  • GET /health          (health check)                  │
+│       │                                                           │
+│       │ MQTT Subscribe/Publish                                   │
+│       ▼                                                           │
+│  Mosquitto Broker (localhost:1883)                              │
+│       │                                                           │
+│       └─► Devices: temp_sensor, motion_sensor, smart_lamp, etc. │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-### Quick Start
+### Quick Start Guide
+
+**Automated Start (Recommended):**
 ```bash
-# 1. Pastikan semua containers running
-docker-compose up -d
+cd /home/yrr/smarthome_mqtt
+bash start-dashboard.sh
+```
 
-# 2. Start web server
+**Manual Start:**
+```bash
+# Terminal 1: Start MQTT Proxy
+cd web_ui
+python3 mqtt_proxy.py
+
+# Terminal 2: Start Web Server
 cd web_ui
 python3 -m http.server 8000
 
-# 3. Buka browser
-# http://localhost:8000
+# Browser: Open http://localhost:8000
 ```
 
-### Features
-- **Overview Cards**: Temperature, Motion, Lamp status dengan icon dan visual indicators
-- **Real-time Chart**: Multi-series line chart (temperature vs motion)
-- **Lamp Control Panel**: ON/OFF buttons + brightness slider (0-100%)
-- **Event Log**: Scrollable table dengan auto-update (max 100 entries)
-- **Connection Status**: Real-time MQTT WebSocket connection indicator
+### Features & Capabilities
+
+#### 1. **Real-time Monitoring**
+- Temperature sensor display (°C dengan 1 desimal)
+- Motion detection indicator dengan alert
+- Smart light status (ON/OFF + brightness %)
+- Thermostat mode dan HVAC state
+- Camera recording status
+
+#### 2. **Device Control**
+- Light ON/OFF toggle buttons
+- Brightness slider (0-100%) dengan auto-update
+- Future: Thermostat & camera controls
+
+#### 3. **Data Visualization**
+- Dual-axis Chart.js graph
+- Temperature trend (left axis, yellow line)
+- Motion events (right axis, green line)
+- 30 data points rolling history
+- Smooth animations
+
+#### 4. **Event Logging**
+- Time-stamped event table
+- Source tracking (sensor/device names)
+- Type classification (Sensor Data, Status Change)
+- Auto-scroll to latest entry
+- Maximum 50 entries display
+
+#### 5. **Connection Status**
+- Real-time connection indicator (header)
+- Pulsing dot animation when connected
+- Automatic reconnection handling
+- Health check endpoint monitoring
+
+### MQTT Topics Integration
+
+**Subscribed Topics (Proxy → Broker):**
+```
+home/sensor/temperature       → Temperature Card
+home/security/motion          → Motion Indicator
+home/security/camera/status   → Camera Status
+home/light/status             → Light Card
+home/thermostat/status        → Thermostat Card
+```
+
+**Published Topics (Proxy → Broker):**
+```
+home/light/command            ← Light Control Buttons
+home/thermostat/command       ← (Future) Thermostat Control
+home/security/camera/command  ← (Future) Camera Control
+```
+
+### API Endpoints Reference
+
+| Endpoint | Method | Description | Response |
+|----------|--------|-------------|----------|
+| `/health` | GET | Health check | `{"status":"ok"}` |
+| `/api/data` | GET | All sensor data | JSON with temp, motion, light, thermostat |
+| `/api/events` | GET | Event log | Array of timestamped events |
+| `/api/status` | GET | Connection status | MQTT connection state |
+| `/api/light/control` | POST | Control light | `{"command":"ON","brightness":100}` |
+
+### Testing Dashboard
+
+**Test 1: Verify Proxy Health**
+```bash
+curl http://localhost:5000/health
+# Expected: {"status":"ok"}
+```
+
+**Test 2: Check Real-time Data**
+```bash
+curl http://localhost:5000/api/data
+# Expected: JSON dengan temperature, motion, light_status, dll
+```
+
+**Test 3: Control Light via API**
+```bash
+# Turn ON
+curl -X POST http://localhost:5000/api/light/control \
+  -H "Content-Type: application/json" \
+  -d '{"command":"ON","brightness":80}'
+
+# Turn OFF
+curl -X POST http://localhost:5000/api/light/control \
+  -H "Content-Type: application/json" \
+  -d '{"command":"OFF"}'
+```
+
+**Test 4: Monitor MQTT Messages**
+```bash
+# Subscribe to all topics
+mosquitto_sub -h localhost -t "home/#" -v
+```
 
 ### Technical Stack
+- **Backend**: Flask (MQTT Proxy Server)
+- **MQTT Client**: paho-mqtt (Python)
 - **Frontend**: Pure HTML5 + CSS3 + Vanilla JavaScript
-- **Charts**: Chart.js for data visualization
-- **MQTT**: MQTT.js over WebSocket (ws://localhost:9001)
+- **Charts**: Chart.js 4.4.0
 - **Styling**: Custom dark theme dengan CSS variables
+- **Communication**: HTTP Polling (1 second interval)
 - **Responsive**: Mobile-first design
 
+### Troubleshooting Dashboard
+
+**Problem: Dashboard shows "Disconnected"**
+```bash
+# Check proxy running
+ps aux | grep mqtt_proxy
+
+# Check proxy logs
+tail -f .mqtt_proxy.log
+
+# Restart proxy
+pkill -f mqtt_proxy.py
+cd web_ui && python3 mqtt_proxy.py &
+```
+
+**Problem: No data displayed**
+```bash
+# Verify MQTT broker running
+docker-compose ps | grep mqtt_broker
+
+# Check devices publishing
+docker-compose logs temp_sensor motion_sensor
+
+# Test proxy API
+curl http://localhost:5000/api/data
+```
+
+**Problem: Controls not working**
+```bash
+# Check lamp device listening
+docker-compose logs smart_lamp
+
+# Monitor command topic
+mosquitto_sub -h localhost -t "home/light/command" -v
+
+# Test manual command
+mosquitto_pub -h localhost -t "home/light/command" -m "ON"
+```
+
 ### Dokumentasi Lengkap
-Lihat [web_ui/README.md](web_ui/README.md) untuk:
-- Setup instructions
-- Troubleshooting guide
-- Customization options
-- MQTT topic reference
+Untuk dokumentasi detail, troubleshooting advanced, dan customization:
+- **Dashboard Update Guide**: [DASHBOARD_UPDATE.md](DASHBOARD_UPDATE.md)
+- **Web UI README**: [web_ui/README.md](web_ui/README.md)
+
+---
+
+## 🌐 Legacy Web Dashboard (Old)
+
+⚠️ **Deprecated**: Dashboard lama telah digantikan dengan Enhanced Dashboard.
+
+Dashboard lama (direktori `dashboard/`) menggunakan koneksi MQTT WebSocket langsung tanpa proxy. Fitur terbatas dibanding enhanced version.
 
 ---
 
@@ -760,12 +975,29 @@ docker volume inspect mqtt_smarthome_mosquitto_data
 ```
 home/
 ├── sensor/
-│   ├── temperature      (publish only)
-│   └── motion           (publish only)
+│   └── temperature          (publish: temp_sensor)
+├── security/
+│   ├── motion               (publish: motion_sensor)
+│   └── camera/
+│       └── status           (publish: camera device)
+├── light/
+│   ├── command              (subscribe: smart_lamp)
+│   └── status               (publish: smart_lamp)
+└── thermostat/
+    ├── command              (subscribe: thermostat)
+    └── status               (publish: thermostat)
+```
+
+**Legacy Topics (Old System):**
+```
+home/
+├── sensor/
+│   ├── temperature
+│   └── motion
 └── actuator/
     └── lamp/
-        ├── command      (subscribe)
-        └── status       (publish)
+        ├── command
+        └── status
 ```
 
 ### Environment Variables untuk Devices
