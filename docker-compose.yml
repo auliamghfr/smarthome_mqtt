@@ -97,6 +97,29 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # Thermostat Device
+  thermostat:
+    build:
+      context: ./devices
+      dockerfile: Dockerfile
+    container_name: thermostat
+    environment:
+      - DEVICE_TYPE=thermostat
+      - BROKER=mosquitto
+      - PORT=1883
+      - CLIENT_ID=thermostat
+      - THERMOSTAT_ID=main_hvac
+      - TEMP_TOPIC=home/sensor/temperature
+      - COMMAND_TOPIC=home/thermostat/command
+      - STATUS_TOPIC=home/thermostat/status
+      - HVAC_TOPIC=home/hvac/command
+    networks:
+      - smarthome_network
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    restart: unless-stopped
+
 # Docker Network
 networks:
   smarthome_network:

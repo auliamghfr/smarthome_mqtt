@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="header-title">
+                    <svg class="header-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+                    </svg>
+                    Smart Home Dashboard
+                </h1>
+                <div class="connection-status">
+                    <span class="status-dot" id="connectionDot"></span>
+                    <span id="connectionStatus">Connecting...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Overview Cards -->
+            <section class="overview-section">
+                <h2 class="section-title">Overview</h2>
+                <div class="card-grid">
+                    <!-- Temperature Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <svg class="card-icon temperature-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v6.586l3.707 3.707a1 1 0 01-1.414 1.414L10 11.414V3a1 1 0 011-1z" clip-rule="evenodd"/>
+                                <circle cx="10" cy="16" r="3"/>
+                            </svg>
+                            <h3 class="card-title">Temperature</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="temp-display">
+                                <span class="stat-value" id="tempValue">--</span>
+                                <span class="stat-unit">°C</span>
+                            </div>
+                            <div class="stat-label">Room Temperature</div>
+                        </div>
+                    </div>
+
+                    <!-- Motion Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <svg class="card-icon motion-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                            </svg>
+                            <h3 class="card-title">Security Camera</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="motion-status" id="motionStatus">
+                                <span id="motionText">No Motion</span>
+                                <span class="motion-indicator" id="motionIndicator"></span>
+                            </div>
+                            <div class="stat-label">Motion Detection</div>
+                        </div>
+                    </div>
+
+                    <!-- Thermostat Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <svg class="card-icon thermostat-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+                            </svg>
+                            <h3 class="card-title">Thermostat</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="thermostat-display">
+                                <div class="stat-value" id="thermostatMode">--</div>
+                                <div class="thermostat-info">
+                                    <div class="info-item">Mode: <span id="hvacState">OFF</span></div>
+                                    <div class="info-item">Target: <span id="targetTemp">24</span>°C</div>
+                                </div>
+                            </div>
+                            <div class="stat-label">Climate Control</div>
+                        </div>
+                    </div>
+
+                    <!-- Lamp Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <svg class="card-icon lamp-icon" id="lampIcon" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z"/>
+                            </svg>
+                            <h3 class="card-title">Smart Lamp</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="lamp-status" id="lampStatus">
+                                <span class="lamp-state" id="lampState">OFF</span>
+                            </div>
+                            <div class="stat-label">Current Status</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chart & Control Section -->
+            <section class="chart-control-section">
+                <div class="chart-control-grid">
+                    <!-- Temperature Chart (50%) -->
+                    <div class="card chart-card chart-large">
+                        <div class="card-header">
+                            <h3 class="card-title">Temperature Monitor</h3>
+                            <div class="chart-legend">
+                                <span class="legend-item">
+                                    <span class="legend-dot temp-color"></span>
+                                    Temperature (°C)
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="temperatureChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Motion Chart (25%) -->
+                    <div class="card chart-card chart-small">
+                        <div class="card-header">
+                            <h3 class="card-title">Motion Detection</h3>
+                            <div class="chart-legend">
+                                <span class="legend-item">
+                                    <span class="legend-dot motion-color"></span>
+                                    Motion Events
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="motionChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Lamp Control (25%) -->
+                    <div class="card control-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Lamp Control</h3>
+                        </div>
+                        <div class="card-body control-body">
+                            <div class="control-layout">
+                                <div class="control-buttons">
+                                    <button class="btn btn-on" id="btnOn">
+                                        💡 Turn ON
+                                    </button>
+                                    <button class="btn btn-off" id="btnOff">
+                                        ⛔ Turn OFF
+                                    </button>
+                                </div>
+                                <div class="control-status">
+                                    <div class="automation-badge" id="automationStatus">
+                                        <span class="status-indicator" id="autoIndicator">●</span>
+                                        <span id="autoText">Automation Active</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Event Log -->
+            <section class="log-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Event Log</h3>
+                        <button class="btn-clear" id="btnClearLog">Clear Log</button>
+                    </div>
+                    <div class="card-body log-body">
+                        <div class="table-wrapper">
+                            <table class="log-table">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Source</th>
+                                        <th>Role</th>
+                                        <th>Type</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="logTableBody">
+                                    <tr class="no-data">
+                                        <td colspan="5">Waiting for events...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>Smart Home MQTT Dashboard | Real-time IoT Monitoring</p>
+        </div>
+    </footer>
+
+    <script src="script.js?v=2.0"></script>
+</body>
+</html>

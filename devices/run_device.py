@@ -19,7 +19,7 @@ def main():
     
     if not device_type:
         logger.error("DEVICE_TYPE environment variable not set!")
-        logger.error("Valid values: temp_sensor, motion_sensor, smart_lamp")
+        logger.error("Valid values: temp_sensor, motion_sensor, smart_lamp, thermostat")
         sys.exit(1)
     
     logger.info(f"Launching device: {device_type}")
@@ -34,9 +34,12 @@ def main():
         elif device_type == "smart_lamp":
             from smart_lamp import run_smart_lamp
             run_smart_lamp()
+        elif device_type == "thermostat":
+            from thermostat import run_thermostat
+            run_thermostat()
         else:
             logger.error(f"Unknown device type: {device_type}")
-            logger.error("Valid values: temp_sensor, motion_sensor, smart_lamp")
+            logger.error("Valid values: temp_sensor, motion_sensor, smart_lamp, thermostat")
             sys.exit(1)
     except Exception as e:
         logger.error(f"Failed to launch device: {e}")

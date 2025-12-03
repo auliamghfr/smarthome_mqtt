@@ -1,6 +1,20 @@
 # 🚀 Quick Start Guide - Smart Home System
 
-## Langkah Cepat Menjalankan Project
+## ⚡ Super Quick Start (Automated)
+
+```bash
+# 1. Start semua Docker services
+./manage.sh start
+
+# 2. Start web dashboard (otomatis buka browser)
+./start-dashboard.sh
+```
+
+**Done!** Dashboard terbuka di: `http://localhost:8000`
+
+---
+
+## 📋 Manual Step-by-Step
 
 ### 1️⃣ Pastikan Docker Berjalan
 
@@ -44,26 +58,60 @@ motion_sensor       mqtt_smarthome-motion_sensor Up
 smart_lamp          mqtt_smarthome-lamp        Up
 ```
 
-### 4️⃣ Akses Node-RED
+### 4️⃣ Akses Dashboard
 
-Buka browser:
-- **Node-RED Editor**: http://localhost:1880
-- **Dashboard** (setelah dikonfigurasi): http://localhost:1880/ui
+Ada 2 pilihan dashboard:
 
-### 5️⃣ Import Flow ke Node-RED
+#### **Option A: Web Dashboard (Modern UI)** 🌐
 
-1. Buka http://localhost:1880
-2. Klik menu ☰ (hamburger, kanan atas)
-3. Pilih **Import**
-4. Pilih tab **select a file to import**
-5. Browse dan pilih file: `/home/aulia/mqtt_smarthome/nodered-flow.json`
-6. Klik **Import**
-7. Klik tombol **Deploy** (merah, kanan atas)
+```bash
+# Start web dashboard (automatic)
+./start-dashboard.sh
+
+# Atau manual:
+cd web_ui
+python3 -m http.server 8000 &
+```
+
+Buka browser: **http://localhost:8000**
+
+**Features:**
+- 📊 Real-time chart (temperature & motion)
+- 🎮 Interactive lamp control (ON/OFF + brightness)
+- 📝 Event log table
+- 🎨 Modern dark theme
+- 📱 Responsive design
+
+#### **Option B: Node-RED Dashboard** 🔧
+
+Buka browser: **http://localhost:1880/ui**
+
+**Features:**
+- Node-RED built-in dashboard
+- Automation flow editor
+- Debug panel
+- Widget-based UI
+
+### 5️⃣ Verify System Working
+
+**Check Web Dashboard Connection:**
+- Status indicator harus "Connected" (hijau)
+- Temperature card update setiap 5 detik
+- Motion status update setiap 3 detik
+- Chart bertambah data points
+
+**Test Lamp Control:**
+1. Klik "Turn ON" button
+2. Lamp card harus show "ON" (kuning)
+3. Event log harus record command
 
 ### 6️⃣ Test MQTT Communication
 
-**Cara 1: Lihat Debug di Node-RED**
-1. Di Node-RED, klik tab **Debug** (ikon bug, sidebar kanan)
+**Cara 1: Lihat Debug di Web Dashboard**
+- Buka Event Log table
+- Harus ada entries dari sensors
+
+**Cara 2: Monitor via Terminal**
 2. Anda akan melihat messages dari sensors
 
 **Cara 2: Gunakan mosquitto_sub**
