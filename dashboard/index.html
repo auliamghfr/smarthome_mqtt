@@ -300,7 +300,7 @@
     </div>
 
     <script>
-        const MQTT_BROKER = 'ws://localhost:9001';
+        const MQTT_BROKER = `ws://${window.location.hostname}:9001`;
         let client;
         let isManualControl = false;
 
