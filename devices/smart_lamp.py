@@ -23,6 +23,10 @@ class SmartLamp:
         self.command_topic = command_topic
         self.status_topic = status_topic
         self.lamp_state = "OFF"  # Initial state
+        self.brightness = 100  # Default brightness
+        self.motion_topic = "home/sensor/motion"  # Subscribe to motion sensor
+        self.last_motion_time = 0
+        self.auto_off_delay = 30  # Auto off after 30 seconds of no motion
         
         # Create MQTT client
         self.client = create_mqtt_client(client_id, broker, port)
@@ -34,12 +38,16 @@ class SmartLamp:
         """
         try:
             payload = msg.payload.decode('utf-8')
+            
+            # Only handle lamp command messages (automation handled by Node-RED)
             logger.info(f"📥 Received command: {payload} on {msg.topic}")
             
             # Try to parse as JSON first
             try:
                 data = json.loads(payload)
                 command = data.get("command", payload).upper()
+                if "brightness" in data:
+                    self.brightness = int(data.get("brightness", 100))
             except json.JSONDecodeError:
                 # If not JSON, treat as plain text
                 command = payload.upper()
@@ -68,6 +76,7 @@ class SmartLamp:
         status_payload = {
             "device": "smart_lamp",
             "state": self.lamp_state,
+            "brightness": self.brightness,
             "timestamp": time.time()
         }
         

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Dashboard</title>
+    <script src="https://unpkg.com/mqtt@5.3.4/dist/mqtt.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .status {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            font-size: 1.1em;
+        }
+
+        .status.connected {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .status.disconnected {
+            background: rgba(244, 67, 54, 0.3);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .card-icon {
+            font-size: 2.5em;
+            margin-right: 15px;
+        }
+
+        .card-title {
+            font-size: 1.5em;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 20px 0;
+        }
+
+        .temp-display {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .temp-value {
+            font-size: 4em;
+            font-weight: bold;
+            color: #667eea;
+            line-height: 1;
+        }
+
+        .temp-unit {
+            font-size: 2em;
+            color: #999;
+        }
+
+        .temp-bar {
+            height: 30px;
+            background: linear-gradient(to right, #00b500, #e6e600, #ca3838);
+            border-radius: 15px;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .temp-indicator {
+            position: absolute;
+            top: -5px;
+            width: 4px;
+            height: 40px;
+            background: white;
+            border: 2px solid #333;
+            transition: left 0.5s ease;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .motion-status {
+            text-align: center;
+            padding: 30px;
+            font-size: 1.8em;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .motion-status.detected {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .motion-status.no-motion {
+            background: #f0f0f0;
+            color: #999;
+        }
+
+        .lamp-control {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .lamp-status {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .lamp-status.on {
+            background: #FFC107;
+            color: #333;
+        }
+
+        .lamp-status.off {
+            background: #f0f0f0;
+            color: #999;
+        }
+
+        .switch-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 80px;
+            height: 40px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 40px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 32px;
+            width: 32px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(40px);
+        }
+
+        .timestamp {
+            text-align: center;
+            margin-top: 20px;
+            color: #999;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 Smart Home Dashboard</h1>
+        
+        <div id="connectionStatus" class="status disconnected">
+            ⚠️ Connecting to MQTT Broker...
+        </div>
+
+        <div class="dashboard">
+            <!-- Temperature Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🌡️</div>
+                    <div class="card-title">Temperature</div>
+                </div>
+                <div class="card-body">
+                    <div class="temp-display">
+                        <div>
+                            <span id="tempValue" class="temp-value">--</span>
+                            <span class="temp-unit">°C</span>
+                        </div>
+                        <div class="temp-bar">
+                            <div id="tempIndicator" class="temp-indicator"></div>
+                        </div>
+                    </div>
+                    <div class="timestamp" id="tempTime">Waiting for data...</div>
+                </div>
+            </div>
+
+            <!-- Motion Sensor Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">👁️</div>
+                    <div class="card-title">Motion Detection</div>
+                </div>
+                <div class="card-body">
+                    <div id="motionStatus" class="motion-status no-motion">
+                        No Motion
+                    </div>
+                    <div class="timestamp" id="motionTime">Waiting for data...</div>
+                </div>
+            </div>
+
+            <!-- Lamp Control Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">💡</div>
+                    <div class="card-title">Smart Lamp</div>
+                </div>
+                <div class="card-body">
+                    <div class="lamp-control">
+                        <div id="lampStatus" class="lamp-status off">OFF</div>
+                        <div class="switch-container">
+                            <span style="font-weight: 600; color: #666;">OFF</span>
+                            <label class="switch">
+                                <input type="checkbox" id="lampSwitch" onchange="toggleLamp()">
+                                <span class="slider"></span>
+                            </label>
+                            <span style="font-weight: 600; color: #666;">ON</span>
+                        </div>
+                        <div class="timestamp" id="lampTime">Waiting for data...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const MQTT_BROKER = `ws://${window.location.hostname}:9001`;
+        let client;
+        let isManualControl = false;
+
+        // Connect to MQTT
+        function connectMQTT() {
+            client = mqtt.connect(MQTT_BROKER);
+
+            client.on('connect', () => {
+                console.log('Connected to MQTT broker');
+                document.getElementById('connectionStatus').className = 'status connected';
+                document.getElementById('connectionStatus').textContent = '✓ Connected to MQTT Broker';
+
+                // Subscribe to topics
+                client.subscribe('home/sensor/temperature');
+                client.subscribe('home/sensor/motion');
+                client.subscribe('home/actuator/lamp/status');
+            });
+
+            client.on('message', (topic, message) => {
+                const data = JSON.parse(message.toString());
+                
+                if (topic === 'home/sensor/temperature') {
+                    updateTemperature(data);
+                } else if (topic === 'home/sensor/motion') {
+                    updateMotion(data);
+                } else if (topic === 'home/actuator/lamp/status') {
+                    updateLampStatus(data);
+                }
+            });
+
+            client.on('error', (error) => {
+                console.error('MQTT Error:', error);
+                document.getElementById('connectionStatus').className = 'status disconnected';
+                document.getElementById('connectionStatus').textContent = '❌ Connection Error';
+            });
+
+            client.on('close', () => {
+                document.getElementById('connectionStatus').className = 'status disconnected';
+                document.getElementById('connectionStatus').textContent = '⚠️ Disconnected - Reconnecting...';
+            });
+        }
+
+        function updateTemperature(data) {
+            const temp = data.value;
+            document.getElementById('tempValue').textContent = temp.toFixed(1);
+            
+            // Update indicator position (0-40°C range)
+            const percentage = (temp / 40) * 100;
+            document.getElementById('tempIndicator').style.left = `${Math.min(Math.max(percentage, 0), 100)}%`;
+            
+            document.getElementById('tempTime').textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+        }
+
+        function updateMotion(data) {
+            const motionDiv = document.getElementById('motionStatus');
+            if (data.value === 1) {
+                motionDiv.className = 'motion-status detected';
+                motionDiv.innerHTML = '🚶 Motion Detected!';
+            } else {
+                motionDiv.className = 'motion-status no-motion';
+                motionDiv.innerHTML = '😴 No Motion';
+            }
+            document.getElementById('motionTime').textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+        }
+
+        function updateLampStatus(data) {
+            const statusDiv = document.getElementById('lampStatus');
+            const switchEl = document.getElementById('lampSwitch');
+            
+            if (!isManualControl) {
+                if (data.state === 'ON') {
+                    statusDiv.className = 'lamp-status on';
+                    statusDiv.textContent = '💡 ON';
+                    switchEl.checked = true;
+                } else {
+                    statusDiv.className = 'lamp-status off';
+                    statusDiv.textContent = '💡 OFF';
+                    switchEl.checked = false;
+                }
+            }
+            
+            document.getElementById('lampTime').textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+            
+            setTimeout(() => {
+                isManualControl = false;
+            }, 500);
+        }
+
+        function toggleLamp() {
+            isManualControl = true;
+            const switchEl = document.getElementById('lampSwitch');
+            const command = switchEl.checked ? 'ON' : 'OFF';
+            
+            if (client && client.connected) {
+                client.publish('home/actuator/lamp/command', command);
+                console.log('Sent lamp command:', command);
+            }
+        }
+
+        // Initialize
+        connectMQTT();
+    </script>
+</body>
+</html>

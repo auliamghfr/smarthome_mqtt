@@ -11,7 +11,7 @@
         "type": "tab",
         "label": "Dashboard Monitoring",
         "disabled": false,
-        "info": "Dashboard UI for monitoring and control"
+        "info": "Enhanced Dashboard UI for monitoring and control"
     },
     {
         "id": "mqtt_broker_config",
@@ -29,7 +29,7 @@
     {
         "id": "temp_group",
         "type": "ui_group",
-        "name": "Temperature Monitoring",
+        "name": "🌡️ Temperature Monitoring",
         "tab": "dashboard_ui_tab",
         "order": 1,
         "disp": true,
@@ -39,7 +39,7 @@
     {
         "id": "motion_group",
         "type": "ui_group",
-        "name": "Motion Detection",
+        "name": "🚶 Motion Detection",
         "tab": "dashboard_ui_tab",
         "order": 2,
         "disp": true,
@@ -49,7 +49,7 @@
     {
         "id": "lamp_group",
         "type": "ui_group",
-        "name": "Smart Lamp Control",
+        "name": "💡 Smart Lamp Control",
         "tab": "dashboard_ui_tab",
         "order": 3,
         "disp": true,
@@ -57,13 +57,42 @@
         "collapse": false
     },
     {
+        "id": "system_group",
+        "type": "ui_group",
+        "name": "📊 System Status",
+        "tab": "dashboard_ui_tab",
+        "order": 4,
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
         "id": "dashboard_ui_tab",
         "type": "ui_tab",
-        "name": "Smart Home Dashboard",
+        "name": "🏠 Smart Home Dashboard",
         "icon": "dashboard",
         "order": 1,
         "disabled": false,
         "hidden": false
+    },
+    {
+        "id": "css_template",
+        "type": "ui_template",
+        "z": "dashboard_tab",
+        "group": "system_group",
+        "name": "Custom CSS",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "format": "<style>\n/* Custom CSS for Smart Home Dashboard */\n/* Modern and attractive styling for Node-RED Dashboard */\n\n:root {\n    --primary-color: #2563eb;\n    --secondary-color: #64748b;\n    --success-color: #10b981;\n    --warning-color: #f59e0b;\n    --danger-color: #ef4444;\n    --dark-bg: #1f2937;\n    --light-bg: #f8fafc;\n    --card-bg: #ffffff;\n    --text-primary: #1f2937;\n    --text-secondary: #64748b;\n    --border-radius: 12px;\n    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);\n    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);\n}\n\n/* Global Styles */\nbody {\n    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;\n    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n    min-height: 100vh;\n    margin: 0;\n}\n\n/* Dashboard Container */\n.md-toolbar-tools {\n    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;\n    color: white !important;\n    box-shadow: var(--shadow-lg);\n}\n\n.md-toolbar-tools h1 {\n    font-weight: 600;\n    font-size: 1.5rem;\n}\n\n/* Card Styling */\n.md-card {\n    border-radius: var(--border-radius) !important;\n    box-shadow: var(--shadow) !important;\n    border: none !important;\n    background: rgba(255, 255, 255, 0.95) !important;\n    backdrop-filter: blur(10px);\n    transition: all 0.3s ease;\n}\n\n.md-card:hover {\n    transform: translateY(-2px);\n    box-shadow: var(--shadow-lg) !important;\n}\n\n/* Card Headers */\n.md-card .md-card-title {\n    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;\n    color: white !important;\n    border-radius: var(--border-radius) var(--border-radius) 0 0 !important;\n    padding: 16px 20px !important;\n    font-weight: 600 !important;\n    font-size: 1.1rem !important;\n}\n\n/* Temperature Gauge Styling */\n.ui-gauge {\n    background: transparent !important;\n}\n\n.ui-gauge canvas {\n    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));\n}\n\n/* Switch Styling */\n.md-switch {\n    transform: scale(1.2);\n}\n\n.md-switch.md-checked .md-thumb {\n    background-color: var(--success-color) !important;\n}\n\n.md-switch.md-checked .md-bar {\n    background-color: rgba(16, 185, 129, 0.5) !important;\n}\n\n/* Text Display Styling */\n.md-card .md-card-content {\n    padding: 20px !important;\n}\n\n.md-card .md-card-content .md-display-1,\n.md-card .md-card-content .md-display-2,\n.md-card .md-card-content .md-headline {\n    font-weight: 700 !important;\n    color: var(--text-primary) !important;\n    text-align: center !important;\n    font-size: 2rem !important;\n}\n\n/* Status Indicators */\n.status-online {\n    color: var(--success-color) !important;\n    font-weight: 600;\n}\n\n.status-offline {\n    color: var(--danger-color) !important;\n    font-weight: 600;\n}\n\n.status-motion {\n    color: var(--warning-color) !important;\n    font-weight: 600;\n    animation: pulse 2s infinite;\n}\n\n@keyframes pulse {\n    0%, 100% { opacity: 1; }\n    50% { opacity: 0.7; }\n}\n\n/* Button Styling */\n.md-button {\n    border-radius: 8px !important;\n    font-weight: 600 !important;\n    text-transform: none !important;\n    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;\n    transition: all 0.3s ease !important;\n}\n\n.md-button:hover {\n    transform: translateY(-1px) !important;\n    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;\n}\n\n.md-button.md-primary {\n    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;\n}\n\n/* Grid Layout Improvements */\n.md-layout-grid {\n    padding: 16px !important;\n}\n\n.md-layout-item {\n    margin-bottom: 16px !important;\n}\n\n/* Responsive Design */\n@media (max-width: 768px) {\n    .md-layout-item {\n        width: 100% !important;\n    }\n\n    .md-card .md-card-content .md-display-1 {\n        font-size: 1.5rem !important;\n    }\n}\n\n/* Custom Icons */\n.icon-temperature::before {\n    content: \"🌡️\";\n    font-size: 1.5em;\n    margin-right: 8px;\n}\n\n.icon-motion::before {\n    content: \"🚶\";\n    font-size: 1.5em;\n    margin-right: 8px;\n}\n\n.icon-lamp::before {\n    content: \"💡\";\n    font-size: 1.5em;\n    margin-right: 8px;\n}\n\n/* Loading Animation */\n.loading {\n    animation: spin 1s linear infinite;\n}\n\n@keyframes spin {\n    from { transform: rotate(0deg); }\n    to { transform: rotate(360deg); }\n}\n\n/* Custom Gauge Colors */\n.temperature-gauge .ui-gauge {\n    --gauge-color: linear-gradient(135deg, #ff6b6b, #ffa500, #32cd32);\n}\n\n/* Status Cards */\n.status-card {\n    position: relative;\n    overflow: hidden;\n}\n\n.status-card::before {\n    content: '';\n    position: absolute;\n    top: 0;\n    left: 0;\n    right: 0;\n    height: 4px;\n    background: linear-gradient(90deg, var(--success-color), var(--warning-color), var(--danger-color));\n}\n\n/* Notification Styles */\n.notification {\n    position: fixed;\n    top: 20px;\n    right: 20px;\n    background: white;\n    border-radius: var(--border-radius);\n    box-shadow: var(--shadow-lg);\n    padding: 16px 20px;\n    z-index: 1000;\n    animation: slideIn 0.3s ease;\n}\n\n@keyframes slideIn {\n    from { transform: translateX(100%); opacity: 0; }\n    to { transform: translateX(0); opacity: 1; }\n}\n\n/* Dark Mode Support */\n@media (prefers-color-scheme: dark) {\n    :root {\n        --dark-bg: #0f172a;\n        --light-bg: #1e293b;\n        --card-bg: #334155;\n        --text-primary: #f1f5f9;\n        --text-secondary: #94a3b8;\n    }\n\n    .md-card {\n        background: var(--card-bg) !important;\n        color: var(--text-primary) !important;\n    }\n}\n\n/* Custom Scrollbar */\n::-webkit-scrollbar {\n    width: 8px;\n}\n\n::-webkit-scrollbar-track {\n    background: #f1f1f1;\n    border-radius: 4px;\n}\n\n::-webkit-scrollbar-thumb {\n    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n    border-radius: 4px;\n}\n\n::-webkit-scrollbar-thumb:hover {\n    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);\n}\n\n/* Footer Styling */\n.dashboard-footer {\n    text-align: center;\n    padding: 20px;\n    color: rgba(255, 255, 255, 0.8);\n    font-size: 0.9rem;\n}\n\n.dashboard-footer a {\n    color: rgba(255, 255, 255, 0.9);\n    text-decoration: none;\n}\n\n.dashboard-footer a:hover {\n    text-decoration: underline;\n}\n</style>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "global",
+        "className": "",
+        "x": 120,
+        "y": 40,
+        "wires": [[]]
     },
     {
         "id": "motion_in_auto",
@@ -184,7 +213,7 @@
         "name": "Temp In",
         "topic": "home/sensor/temperature",
         "qos": "1",
-        "datatype": "json",
+        "datatype": "auto-detect",
         "broker": "mqtt_broker_config",
         "nl": false,
         "rap": true,
@@ -192,7 +221,7 @@
         "inputs": 0,
         "x": 120,
         "y": 80,
-        "wires": [["temp_parse_dash"]]
+        "wires": [["temp_parse", "temp_debug_dash", "activity_logger"]]
     },
     {
         "id": "temp_parse_dash",
@@ -204,7 +233,7 @@
         "pretty": false,
         "x": 270,
         "y": 80,
-        "wires": [["temp_extract", "temp_debug_dash"]]
+        "wires": [["temp_parse", "temp_debug_dash", "activity_logger"]]
     },
     {
         "id": "temp_extract",
@@ -219,7 +248,7 @@
         "reg": false,
         "x": 430,
         "y": 80,
-        "wires": [["temp_gauge"]]
+        "wires": [["temp_gauge", "temp_chart"]]
     },
     {
         "id": "temp_gauge",
@@ -231,7 +260,7 @@
         "width": 0,
         "height": 0,
         "gtype": "gage",
-        "title": "Room Temperature",
+        "title": "🌡️ Room Temperature",
         "label": "°C",
         "format": "{{value}}",
         "min": 0,
@@ -240,10 +269,38 @@
         "seg1": "20",
         "seg2": "30",
         "diff": false,
-        "className": "",
+        "className": "temperature-gauge",
         "x": 590,
         "y": 80,
         "wires": []
+    },
+    {
+        "id": "temp_chart",
+        "type": "ui_chart",
+        "z": "dashboard_tab",
+        "name": "Temperature History",
+        "group": "temp_group",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "label": "Temperature Trend (Last 30 min)",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "No data yet",
+        "dot": false,
+        "ymin": "15",
+        "ymax": "35",
+        "removeOlder": "30",
+        "removeOlderUnit": "60",
+        "removeOlderPoints": "",
+        "colors": ["#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7"],
+        "useOldStyle": false,
+        "className": "",
+        "x": 590,
+        "y": 120,
+        "wires": [[]]
     },
     {
         "id": "temp_debug_dash",
@@ -275,9 +332,9 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 120,
+        "x": 270,
         "y": 200,
-        "wires": [["motion_parse_dash"]]
+        "wires": [["motion_parse_dash", "activity_logger"]]
     },
     {
         "id": "motion_parse_dash",
@@ -304,6 +361,21 @@
         "reg": false,
         "x": 440,
         "y": 200,
+        "wires": [["motion_format", "motion_debug_dash"]]
+    },
+    {
+        "id": "motion_format",
+        "type": "function",
+        "z": "dashboard_tab",
+        "name": "Format Motion Status",
+        "func": "if (msg.payload === \"MOTION_DETECTED\") {\n    msg.payload = '<span class=\"status-motion\">🚨 MOTION DETECTED!</span>';\n} else {\n    msg.payload = '<span class=\"status-online\">✅ No Motion</span>';\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 440,
+        "y": 160,
         "wires": [["motion_text"]]
     },
     {
@@ -315,10 +387,10 @@
         "width": 0,
         "height": 0,
         "name": "Motion Status",
-        "label": "Status:",
+        "label": "🚶 Motion Status:",
         "format": "{{msg.payload}}",
         "layout": "row-spread",
-        "className": "",
+        "className": "status-card",
         "x": 610,
         "y": 200,
         "wires": []
@@ -353,9 +425,9 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 140,
+        "x": 330,
         "y": 320,
-        "wires": [["lamp_status_parse_dash"]]
+        "wires": [["lamp_status_parse_dash", "activity_logger"]]
     },
     {
         "id": "lamp_status_parse_dash",
@@ -382,6 +454,21 @@
         "reg": false,
         "x": 490,
         "y": 320,
+        "wires": [["lamp_status_format", "lamp_status_debug"]]
+    },
+    {
+        "id": "lamp_status_format",
+        "type": "function",
+        "z": "dashboard_tab",
+        "name": "Format Lamp Status",
+        "func": "if (msg.payload === \"ON\") {\n    msg.payload = '<span class=\"status-online\">💡 Lamp is ON</span>';\n} else {\n    msg.payload = '<span class=\"status-offline\">💡 Lamp is OFF</span>';\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 280,
         "wires": [["lamp_status_text"]]
     },
     {
@@ -393,13 +480,66 @@
         "width": 0,
         "height": 0,
         "name": "Lamp Status",
-        "label": "Current Status:",
+        "label": "💡 Current Status:",
         "format": "{{msg.payload}}",
         "layout": "row-spread",
-        "className": "",
+        "className": "status-card",
         "x": 670,
         "y": 320,
         "wires": []
+    },
+    {
+        "id": "system_status",
+        "type": "ui_text",
+        "z": "dashboard_tab",
+        "group": "system_group",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "name": "System Status",
+        "label": "📊 System Health:",
+        "format": "<span class=\"status-online\">✅ All Systems Online</span>",
+        "layout": "row-spread",
+        "className": "status-card",
+        "x": 450,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "activity_log",
+        "type": "ui_text",
+        "z": "dashboard_tab",
+        "group": "system_group",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "name": "Activity Log",
+        "label": "📝 Recent Activity:",
+        "format": "System initialized and monitoring...",
+        "layout": "row-spread",
+        "className": "",
+        "x": 450,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "footer_template",
+        "type": "ui_template",
+        "z": "dashboard_tab",
+        "group": "system_group",
+        "name": "Dashboard Footer",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "format": "<div class=\"dashboard-footer\">\n    <p>🏠 Smart Home MQTT System | Built with Node-RED & Docker</p>\n    <p>Real-time monitoring and automation for your home</p>\n    <p><a href=\"https://github.com/auliamghfr/smarthome_mqtt\" target=\"_blank\">View on GitHub</a></p>\n</div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 450,
+        "y": 160,
+        "wires": [[]]
     },
     {
         "id": "lamp_status_debug",
