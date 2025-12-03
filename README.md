@@ -2,41 +2,15 @@
 
 Sistem Smart Home berbasis IoT menggunakan MQTT protocol, Docker, Node-RED, dan Python.
 
-🔥 **Automation Aktif:** Lampu menyala otomatis saat motion detected, mati saat no motion.
-
-## ⚡ Quick Start
-
-```bash
-# 1. Clone dan masuk ke direktori
-cd /home/yrr/smarthome_mqtt
-
-# 2. Start semua services
-docker-compose up -d
-
-# 3. Start web dashboard
-cd dashboard && python3 -m http.server 8080 &
-
-# 4. Akses dashboard
-# Web Dashboard: http://localhost:8080
-# Node-RED Editor: http://localhost:1880
-
-# 5. Monitor automation
-docker exec mqtt_broker mosquitto_sub -t 'home/#' -v
-```
-
-✅ **Expected Result:** Lampu otomatis ON saat motion detected, OFF saat no motion.
-
-........................................................................................
-
 ## 📋 Daftar Isi
 
 - [Arsitektur Sistem](#arsitektur-sistem)
 - [Komponen Sistem](#komponen-sistem)
-- [Automation Logic](#-automation-logic)
 - [Struktur Project](#struktur-project)
 - [Cara Menjalankan](#cara-menjalankan)
-- [Akses Dashboard](#-akses-dashboard)
+- [Web Dashboard UI](#web-dashboard-ui)
 - [Testing & Monitoring](#testing--monitoring)
+- [Konfigurasi Node-RED](#konfigurasi-node-red)
 - [Troubleshooting](#troubleshooting)
 - [Referensi](#referensi)
 
@@ -49,13 +23,12 @@ docker exec mqtt_broker mosquitto_sub -t 'home/#' -v
 │                    Docker Network                            │
 │  ┌──────────────┐     ┌──────────────┐                      │
 │  │ Temperature  │────▶│              │                       │
-│  │   Sensor     │     │   Mosquitto  │◀────┐                │
-│  └──────────────┘     │     Broker   │     │                │
+│  │   Sensor     │     │   Mosquitto  │                       │
+│  └──────────────┘     │     Broker   │◀────┐                │
 │                       │   (MQTT)     │     │                │
-│  ┌──────────────┐     │  Port 1883   │     │                │
-│  │   Motion     │────▶│  Port 9001   │     │                │
-│  │   Sensor     │     │  (WebSocket) │     │                │
-│  └──────────────┘     └──────────────┘     │                │
+│  ┌──────────────┐     │              │     │                │
+│  │   Motion     │────▶│   Port 1883  │     │                │
+│  │   Sensor     │     └──────────────┘     │                │
 │  └──────────────┘            ▲             │                │
 │                              │             │                │
 │  ┌──────────────┐            │       ┌─────┴──────┐         │
@@ -75,7 +48,7 @@ docker exec mqtt_broker mosquitto_sub -t 'home/#' -v
 - Port: `1883` (MQTT), `9001` (WebSocket)
 - Fungsi: Pusat komunikasi pub/sub untuk semua IoT devices
 - Konfigurasi: `allow_anonymous true` untuk development
-- WebSocket enabled untuk web dashboard
+- WebSocket: Enabled untuk web dashboard connectivity
 
 ### 2. **Node-RED**
 - Image: `nodered/node-red:latest`
@@ -105,54 +78,16 @@ docker exec mqtt_broker mosquitto_sub -t 'home/#' -v
 
 ---
 
-## 🤖 Automation Logic
-
-### Motion-Based Lamp Control
-
-Sistem automation saat ini menggunakan **motion sensor** untuk mengontrol lampu secara otomatis:
-
-**Logic:**
-```
-✅ Motion Detected (value = 1) → Lamp ON
-❌ No Motion (value = 0) → Lamp OFF
-```
-
-**Karakteristik:**
-- ⚡ **Instant Response**: Lampu langsung menyala/mati tanpa delay
-- 🔄 **Real-time**: Response time < 100ms
-- 🎯 **Simple & Reliable**: Logika sederhana tanpa kompleksitas
-
-**Flow di Node-RED:**
-```
-Motion Sensor → Check Value → Switch (1/0) → Set ON/OFF → Lamp Command
-```
-
-**Topics:**
-- Input: `home/sensor/motion` - Data motion sensor
-- Output: `home/actuator/lamp/command` - Command ON/OFF ke lampu
-- Feedback: `home/actuator/lamp/status` - Status lampu saat ini
-
-📖 **Dokumentasi lengkap:** Lihat [AUTOMATION.md](AUTOMATION.md)
-
----
-
 ## 📁 Struktur Project
 
 ```
-smarthome_mqtt/
+mqtt_smarthome/
 ├── docker-compose.yml          # Orchestration semua services
 ├── README.md                   # Dokumentasi ini
-├── AUTOMATION.md               # Dokumentasi automation lengkap
-├── QUICKSTART.md               # Quick start guide
 ├── mosquitto/
-│   └── mosquitto.conf          # Konfigurasi MQTT broker + WebSocket
+│   └── mosquitto.conf          # Konfigurasi MQTT broker
 ├── node-red/
-│   └── data/
-│       ├── flows.json          # Node-RED automation flow (ignored)
-│       ├── package.json        # Node-RED dependencies
-│       └── settings.js         # Node-RED settings
-├── dashboard/
-│   └── index.html              # Web dashboard (WebSocket)
+│   └── data/                   # Node-RED persistent data
 └── devices/
     ├── Dockerfile              # Container image untuk devices
     ├── run_device.py           # Device launcher
@@ -175,7 +110,7 @@ smarthome_mqtt/
 
 Pastikan Anda berada di direktori project:
 ```bash
-cd /home/yrr/smarthome_mqtt
+cd /home/aulia/mqtt_smarthome
 ```
 
 ### Langkah 2: Build dan Jalankan Semua Container
@@ -203,60 +138,87 @@ docker-compose logs -f mosquitto
 docker-compose logs -f nodered
 ```
 
-### Langkah 4: Akses Node-RED Dashboard
+### Langkah 4: Akses Dashboard
 
-Buka browser dan akses:
+Ada 2 pilihan dashboard untuk monitoring dan kontrol:
+
+#### **Option A: Web Dashboard (Recommended)** 🌐
+
+Modern web-based dashboard dengan real-time chart dan kontrol interaktif.
+
+```bash
+# Start HTTP server untuk web dashboard
+cd web_ui
+python3 -m http.server 8000
+
+# Buka browser:
+http://localhost:8000
 ```
-http://localhost:1880
+
+**Fitur Web Dashboard:**
+- 📊 **Real-time Chart**: Temperature & motion trend visualization
+- 🎮 **Interactive Controls**: Lamp ON/OFF buttons + brightness slider
+- 📝 **Event Log**: Complete activity history table
+- 🎨 **Modern Dark Theme**: Professional UI dengan smooth animations
+- 📱 **Responsive Design**: Works on desktop & mobile
+
+**Detail lengkap:** Lihat [web_ui/README.md](web_ui/README.md)
+
+#### **Option B: Node-RED Dashboard** 🔧
+
+Built-in Node-RED dashboard untuk monitoring dan automation logic.
+
 ```
+http://localhost:1880/ui
+```
+
+**Fitur Node-RED Dashboard:**
+- 🌡️ Temperature Monitoring: Gauge real-time + chart trend
+- 🚶 Motion Detection: Status dengan animasi pulse
+- 💡 Smart Lamp Control: Switch interaktif dengan status visual
+- 📊 System Health: Monitor kesehatan sistem
+- 📝 Activity Log: Log aktivitas real-time semua sensor
 
 ---
 
-## 🌐 Akses Dashboard
+## 🌐 Web Dashboard UI
 
-Setelah semua container berjalan, Anda dapat mengakses:
+### Screenshot Preview
+Web dashboard menyediakan interface modern untuk monitoring dan kontrol Smart Home system.
 
-### 1. Web Dashboard (Recommended)
-
-**URL:** `http://localhost:8080`
-
-**Fitur:**
-- 🌡️ Real-time temperature gauge
-- 👁️ Motion detection status
-- 💡 Lamp status indicator
-- 🎛️ Manual lamp control switch
-
-**Menjalankan Dashboard:**
+### Quick Start
 ```bash
-# Dari terminal terpisah
-cd /home/yrr/smarthome_mqtt/dashboard
-python3 -m http.server 8080
+# 1. Pastikan semua containers running
+docker-compose up -d
+
+# 2. Start web server
+cd web_ui
+python3 -m http.server 8000
+
+# 3. Buka browser
+# http://localhost:8000
 ```
 
-**Screenshot Dashboard:**
-- Temperature display dengan gauge visual
-- Motion sensor: "Motion Detected" atau "No Motion"
-- Lamp status: ON (hijau) atau OFF (merah)
-- Toggle switch untuk kontrol manual
+### Features
+- **Overview Cards**: Temperature, Motion, Lamp status dengan icon dan visual indicators
+- **Real-time Chart**: Multi-series line chart (temperature vs motion)
+- **Lamp Control Panel**: ON/OFF buttons + brightness slider (0-100%)
+- **Event Log**: Scrollable table dengan auto-update (max 100 entries)
+- **Connection Status**: Real-time MQTT WebSocket connection indicator
 
-### 2. Node-RED Editor
+### Technical Stack
+- **Frontend**: Pure HTML5 + CSS3 + Vanilla JavaScript
+- **Charts**: Chart.js for data visualization
+- **MQTT**: MQTT.js over WebSocket (ws://localhost:9001)
+- **Styling**: Custom dark theme dengan CSS variables
+- **Responsive**: Mobile-first design
 
-**URL:** `http://localhost:1880`
-
-**Fitur:**
-- Edit automation flow
-- View debug messages
-- Monitor MQTT traffic
-- Modify logic tanpa coding
-
-**Tab Available:**
-- **Motion Automation**: Flow automation motion → lamp
-
-### 3. Node-RED Dashboard (Optional)
-
-**URL:** `http://localhost:1880/ui`
-
-**Note:** UI dashboard mungkin tidak menampilkan widget dengan benar. Gunakan Web Dashboard (port 8080) untuk monitoring yang lebih reliable.
+### Dokumentasi Lengkap
+Lihat [web_ui/README.md](web_ui/README.md) untuk:
+- Setup instructions
+- Troubleshooting guide
+- Customization options
+- MQTT topic reference
 
 ---
 
@@ -264,49 +226,38 @@ python3 -m http.server 8080
 
 ### Test 1: Monitoring MQTT Messages
 
-**Metode 1: Menggunakan docker exec (Recommended)**
-
-```bash
-# Subscribe ke semua topics
-docker exec mqtt_broker mosquitto_sub -t '#' -v
-
-# Monitor temperature
-docker exec mqtt_broker mosquitto_sub -t 'home/sensor/temperature'
-
-# Monitor motion
-docker exec mqtt_broker mosquitto_sub -t 'home/sensor/motion'
-
-# Monitor lamp
-docker exec mqtt_broker mosquitto_sub -t 'home/actuator/lamp/#' -v
-```
-
-**Metode 2: Install mosquitto clients di host (Optional)**
-
+Install mosquitto clients (jika belum ada):
 ```bash
 sudo apt-get update
 sudo apt-get install mosquitto-clients
+```
 
-# Subscribe ke semua topics
+**Subscribe ke semua topics:**
+```bash
 mosquitto_sub -h localhost -t '#' -v
+```
+
+**Subscribe ke specific topics:**
+```bash
+# Monitor temperature
+mosquitto_sub -h localhost -t 'home/sensor/temperature' -v
+
+# Monitor motion
+mosquitto_sub -h localhost -t 'home/sensor/motion' -v
+
+# Monitor lamp status
+mosquitto_sub -h localhost -t 'home/actuator/lamp/status' -v
 ```
 
 ### Test 2: Manual Control Lamp
 
-**Metode 1: Menggunakan docker exec**
+**Turn ON lamp:**
 ```bash
-# Turn ON lamp
-docker exec mqtt_broker mosquitto_pub -t 'home/actuator/lamp/command' -m 'ON'
-
-# Turn OFF lamp
-docker exec mqtt_broker mosquitto_pub -t 'home/actuator/lamp/command' -m 'OFF'
+mosquitto_pub -h localhost -t 'home/actuator/lamp/command' -m 'ON'
 ```
 
-**Metode 2: Dari host (jika mosquitto-clients terinstall)**
+**Turn OFF lamp:**
 ```bash
-# Turn ON lamp
-mosquitto_pub -h localhost -t 'home/actuator/lamp/command' -m 'ON'
-
-# Turn OFF lamp
 mosquitto_pub -h localhost -t 'home/actuator/lamp/command' -m 'OFF'
 ```
 
@@ -314,16 +265,10 @@ mosquitto_pub -h localhost -t 'home/actuator/lamp/command' -m 'OFF'
 
 ```bash
 # Simulate motion detected
-docker exec mqtt_broker mosquitto_pub -t 'home/sensor/motion' \
-  -m '{"sensor":"motion","value":1,"status":"motion detected"}'
+mosquitto_pub -h localhost -t 'home/sensor/motion' -m '{"value": 1, "status": "motion detected"}'
 
 # Simulate no motion
-docker exec mqtt_broker mosquitto_pub -t 'home/sensor/motion' \
-  -m '{"sensor":"motion","value":0,"status":"no motion"}'
-
-# Expected result:
-# - Motion detected → Lamp turns ON immediately
-# - No motion → Lamp turns OFF immediately
+mosquitto_pub -h localhost -t 'home/sensor/motion' -m '{"value": 0, "status": "no motion"}'
 ```
 
 ### Monitoring Container Health
@@ -341,99 +286,308 @@ docker logs -f smart_lamp
 
 ---
 
-## ⚙️ Verifikasi Automation di Node-RED
+## ⚙️ Konfigurasi Node-RED
 
-### Akses Node-RED Editor
+### Langkah 1: Akses Node-RED UI
 
-```
-http://localhost:1880
-```
+1. Buka browser: `http://localhost:1880`
+2. Anda akan melihat Node-RED Flow Editor
 
-### Melihat Automation Flow
+### Langkah 2: Install Node Dashboard (Jika Belum Ada)
 
-1. Buka browser dan akses Node-RED
-2. Klik tab **"Motion Automation"**
-3. Anda akan melihat flow:
+1. Klik menu ☰ (kanan atas) → **Manage palette**
+2. Tab **Install**
+3. Cari: `node-red-dashboard`
+4. Klik **Install**
 
-```
-[Motion Sensor In] → [Motion Value] → [ON/OFF] → [Lamp Command Out]
-```
+### Langkah 3: Konfigurasi MQTT Broker Connection
 
-### Node Configuration
+1. Drag node **mqtt in** ke canvas
+2. Double-click node tersebut
+3. Di **Server**, klik tombol pencil (edit)
+4. Isi konfigurasi:
+   - **Server**: `mosquitto`
+   - **Port**: `1883`
+   - **Client ID**: (kosongkan atau isi bebas)
+   - **Keep Alive**: `60`
+5. Klik **Add** / **Update**
 
-**MQTT Broker Config:**
-- Server: `mosquitto`
-- Port: `1883`
-- Client ID: `nodered_automation`
+### Langkah 4: Import Flow Automation
 
-**Flow Nodes:**
-
-1. **Motion Sensor In** (MQTT In)
-   - Topic: `home/sensor/motion`
-   - QoS: 0
-   - Datatype: JSON
-
-2. **Motion Value** (Switch)
-   - Property: `msg.payload.value`
-   - Output 1: value == 1 (motion)
-   - Output 2: value == 0 (no motion)
-
-3. **ON / OFF** (Change)
-   - Set `msg.payload` to `"ON"` or `"OFF"`
-
-4. **Lamp Command Out** (MQTT Out)
-   - Topic: `home/actuator/lamp/command`
-   - QoS: 1
-
-### Debug Messages
-
-1. Klik tab **Debug** (sidebar kanan, icon bug)
-2. Anda akan melihat real-time messages dari sensors
-3. Verify automation working:
-   - Motion detected → Command ON sent
-   - No motion → Command OFF sent
-
-### Modifikasi Automation
-
-Untuk mengubah logic:
-
-1. Double-click node yang ingin diubah
-2. Edit konfigurasi
-3. Klik **Done**
-4. Klik **Deploy** (tombol merah kanan atas)
-
-**Contoh modifikasi:**
-- Tambah delay sebelum lamp OFF
-- Kombinasi dengan temperature sensor
-- Tambah time-based rules (malam/siang)
-
----
-
-## 🎨 Import Flow Automation (Optional)
-
-Jika flow belum ada, import JSON berikut:
+Copy JSON flow berikut dan import ke Node-RED:
 
 **Cara Import:**
-1. Menu ☰ → **Import**
-2. Paste JSON
-3. **Import**
-4. **Deploy**
+1. Klik menu ☰ → **Import**
+2. Paste JSON di bawah
+3. Klik **Import**
 
-**Simple Flow JSON:**
+**JSON Flow:**
 
 ```json
 [
-    {"id":"automation_tab","type":"tab","label":"Motion Automation","disabled":false,"info":""},
-    {"id":"mqtt_broker","type":"mqtt-broker","name":"MQTT Broker","broker":"mosquitto","port":"1883","clientid":"nodered_automation","autoConnect":true,"usetls":false,"protocolVersion":"4","keepalive":"60","cleansession":true},
-    {"id":"motion_in","type":"mqtt in","z":"automation_tab","name":"Motion Sensor In","topic":"home/sensor/motion","qos":"0","datatype":"json","broker":"mqtt_broker","x":140,"y":100,"wires":[["check_motion"]]},
-    {"id":"check_motion","type":"switch","z":"automation_tab","name":"Motion Value","property":"payload.value","propertyType":"msg","rules":[{"t":"eq","v":"1","vt":"num"},{"t":"eq","v":"0","vt":"num"}],"outputs":2,"x":340,"y":100,"wires":[["lamp_on"],["lamp_off"]]},
-    {"id":"lamp_on","type":"change","z":"automation_tab","name":"ON","rules":[{"t":"set","p":"payload","pt":"msg","to":"ON","tot":"str"}],"x":510,"y":80,"wires":[["lamp_out"]]},
-    {"id":"lamp_off","type":"change","z":"automation_tab","name":"OFF","rules":[{"t":"set","p":"payload","pt":"msg","to":"OFF","tot":"str"}],"x":510,"y":120,"wires":[["lamp_out"]]},
-    {"id":"lamp_out","type":"mqtt out","z":"automation_tab","name":"Lamp Command Out","topic":"home/actuator/lamp/command","qos":"1","broker":"mqtt_broker","x":690,"y":100,"wires":[]
+    {
+        "id": "mqtt_broker_config",
+        "type": "mqtt-broker",
+        "name": "Mosquitto Broker",
+        "broker": "mosquitto",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "motion_in",
+        "type": "mqtt in",
+        "z": "flow1",
+        "name": "Motion Sensor",
+        "topic": "home/sensor/motion",
+        "qos": "1",
+        "datatype": "json",
+        "broker": "mqtt_broker_config",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 120,
+        "y": 200,
+        "wires": [["parse_motion"]]
+    },
+    {
+        "id": "parse_motion",
+        "type": "json",
+        "z": "flow1",
+        "name": "Parse JSON",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 310,
+        "y": 200,
+        "wires": [["motion_switch"]]
+    },
+    {
+        "id": "motion_switch",
+        "type": "switch",
+        "z": "flow1",
+        "name": "Motion Detected?",
+        "property": "payload.value",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 510,
+        "y": 200,
+        "wires": [["lamp_on"], ["lamp_off"]]
+    },
+    {
+        "id": "lamp_on",
+        "type": "change",
+        "z": "flow1",
+        "name": "Set ON",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "ON",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 710,
+        "y": 180,
+        "wires": [["lamp_command"]]
+    },
+    {
+        "id": "lamp_off",
+        "type": "change",
+        "z": "flow1",
+        "name": "Set OFF",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "OFF",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 710,
+        "y": 220,
+        "wires": [["lamp_command"]]
+    },
+    {
+        "id": "lamp_command",
+        "type": "mqtt out",
+        "z": "flow1",
+        "name": "Lamp Command",
+        "topic": "home/actuator/lamp/command",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "mqtt_broker_config",
+        "x": 930,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "temp_in",
+        "type": "mqtt in",
+        "z": "flow1",
+        "name": "Temperature",
+        "topic": "home/sensor/temperature",
+        "qos": "1",
+        "datatype": "json",
+        "broker": "mqtt_broker_config",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 120,
+        "y": 100,
+        "wires": [["temp_display"]]
+    },
+    {
+        "id": "temp_display",
+        "type": "debug",
+        "z": "flow1",
+        "name": "Temperature Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 350,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "lamp_status_in",
+        "type": "mqtt in",
+        "z": "flow1",
+        "name": "Lamp Status",
+        "topic": "home/actuator/lamp/status",
+        "qos": "1",
+        "datatype": "json",
+        "broker": "mqtt_broker_config",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 120,
+        "y": 300,
+        "wires": [["lamp_status_display"]]
+    },
+    {
+        "id": "lamp_status_display",
+        "type": "debug",
+        "z": "flow1",
+        "name": "Lamp Status Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 360,
+        "y": 300,
+        "wires": []
+    }
 ]
 ```
 
-**Note:** Flow sudah ter-deploy otomatis saat container start. Tidak perlu import manual kecuali flow hilang atau corrupt.
+### Langkah 5: Deploy Flow
+
+Klik tombol **Deploy** (kanan atas)
+
+### Langkah 6: Verifikasi Flow Berjalan
+
+1. Buka tab **Debug** (kanan, ikon bug)
+2. Anda akan melihat messages dari temperature sensor dan lamp status
+3. Saat motion detected, lamp akan otomatis ON
+4. Saat no motion, lamp akan otomatis OFF
+
+---
+
+## 🎨 Membuat Dashboard di Node-RED
+
+### Install Dashboard Nodes
+
+1. Menu ☰ → **Manage palette** → **Install**
+2. Cari: `node-red-dashboard`
+3. Install
+
+### Tambah Dashboard Widgets
+
+Tambahkan nodes berikut ke flow:
+
+**1. Temperature Gauge:**
+- Node: **gauge**
+- Topic: dari `home/sensor/temperature` (gunakan mqtt in)
+- Extract value: gunakan **change** node untuk extract `msg.payload.value`
+
+**2. Motion Indicator:**
+- Node: **text** atau **LED**
+- Input: dari `home/sensor/motion`
+
+**3. Lamp Control:**
+- Node: **switch** (toggle)
+- Output: ke `home/actuator/lamp/command`
+
+**4. Lamp Status Indicator:**
+- Node: **text** atau **LED**
+- Input: dari `home/actuator/lamp/status`
+
+Akses dashboard di:
+```
+http://localhost:1880/ui
+```
 
 ---
 
@@ -590,11 +744,11 @@ docker stats
 docker system df
 
 # Network info
-docker network inspect smarthome_mqtt_smarthome_network
+docker network inspect mqtt_smarthome_smarthome_network
 
 # Volume info
 docker volume ls
-docker volume inspect smarthome_mqtt_mosquitto_data
+docker volume inspect mqtt_smarthome_mosquitto_data
 ```
 
 ---
@@ -659,50 +813,16 @@ docker-compose up --scale temp_sensor=2
 
 Ide untuk pengembangan project:
 
-### 1. Automation Enhancement
-- [ ] Tambah delay OFF (lamp tetap ON 10-30 detik setelah motion stop)
-- [ ] Kombinasi temperature + motion (lamp ON jika suhu > 30°C OR motion)
-- [ ] Time-based rules (automation berbeda untuk siang/malam)
-- [ ] Schedule automation (lamp ON/OFF otomatis di jam tertentu)
-
-### 2. Device Baru
-- [ ] Humidity sensor
-- [ ] Door/window sensor
-- [ ] AC/fan control
-- [ ] Smoke detector
-- [ ] Light intensity sensor
-
-### 3. Security & Monitoring
-- [ ] MQTT authentication (username & password)
-- [ ] MQTT over TLS/SSL
-- [ ] User access control
-- [ ] Audit log
-
-### 4. Data Analytics
-- [ ] Database integration (InfluxDB/MongoDB)
-- [ ] Grafana dashboard untuk historical data
-- [ ] Data visualization & trends
-- [ ] Energy consumption tracking
-
-### 5. Notification & Alert
-- [ ] Telegram bot notification
-- [ ] Email alerts
-- [ ] Push notification mobile
-- [ ] Alert rules (temperature too high, motion at night, dll)
-
-### 6. Advanced Features
-- [ ] Machine Learning prediction
-- [ ] Voice control (Google Assistant/Alexa)
-- [ ] Mobile app (Flutter/React Native)
-- [ ] Geofencing (auto ON/OFF based on location)
-- [ ] Scene/preset automation
-
-### 7. Dashboard Improvement
-- [ ] Chart real-time dengan history
-- [ ] Responsive design untuk mobile
-- [ ] Dark mode
-- [ ] Custom themes
-- [ ] Widget drag & drop
+1. **Tambah device baru**: humidity sensor, door sensor, AC control
+2. **Implementasi autentikasi MQTT**: username & password
+3. **Database integration**: simpan data sensor ke InfluxDB atau MongoDB
+4. **Grafana dashboard**: visualisasi data time-series
+5. **Alert system**: notifikasi via Telegram/Email
+6. **Machine Learning**: predictive automation based on historical data
+7. **MQTT over TLS**: enkripsi komunikasi
+8. **Rule engine**: automation rules yang lebih kompleks
+9. **Mobile app**: Flutter/React Native untuk kontrol
+10. **Voice control**: integrasi dengan Google Assistant/Alexa
 
 ---
 
